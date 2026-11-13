@@ -9,8 +9,11 @@ Runs entirely in the browser. No build step, no server, no dependencies — the 
 ## 🚀 Core Features
 
 ### 🎓 Structured Lesson Plan
-* **24 lessons across 4 tiers** — Beginner (home row), Intermediate (top row + numbers), Advanced (bottom row + shift/symbols), Mastery (fluency).
-* Every lesson runs three stages in sequence — **Characters → Words → Paragraph** — and any stage can be jumped to directly at any time.
+* **24 lessons across 4 levels** — Beginner (home row), Intermediate (top row + numbers), Advanced (bottom row + shift/symbols), Mastery (fluency).
+* Lessons only use keys that have already been taught; capitals appear only after the Shift lesson, and `'` and `?` are taught in the symbols lesson.
+* Most lessons run three stages in sequence — **Characters → Words → Paragraph** — and any stage can be jumped to directly at any time. Lessons 1–3 (no vowels yet) run **Characters → Mixed** instead of fake words.
+* Word stages draw from a built-in list of common English words filtered to the keys you know; paragraph stages mix hand-written text with freshly generated sentences, so runs don't repeat.
+* The **Timed Challenge** is a real 60-second test with a countdown.
 * An animated on-screen pair of hands highlights the exact finger for the next key as you type.
 * Lessons are fully unlocked from the start; a **3-star rating** (based on accuracy) is saved per lesson so you can track mastery over time.
 
@@ -27,10 +30,10 @@ Runs entirely in the browser. No build step, no server, no dependencies — the 
 * **Tug-of-War:** Race a bot typist at a speed you choose (30–80 WPM). Every correct keystroke pulls a rope-and-flag visual toward you in real time; the bot pulls back at a steady pace.
 
 ### 📊 Progress & Feedback
-* Live **WPM / accuracy / error** stats updated on every keystroke, plus an end-of-lesson **WPM-over-time graph** (Canvas-drawn) with an accuracy overlay.
+* Live **time / WPM / accuracy / error** stats updated as you type (WPM counts only correct characters still on the page, so backspacing and retyping can't inflate it), plus an end-of-lesson **WPM-over-time graph** (Canvas-drawn) with an accuracy overlay.
 * A **daily streak counter** that tracks consecutive practice days.
 * A built-in **feedback box** (5-star rating + comments) so you can log impressions as you go.
-* Light/dark theme toggle.
+* Ink (dark) / paper (light) theme toggle, and a sound button that cycles key sounds between on, quiet, and muted.
 
 ---
 
