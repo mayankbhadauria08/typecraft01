@@ -43,6 +43,12 @@ export async function requestEmailChange(request, env) {
   return json({ message: `We've sent a confirmation link to ${email.value}. Your email changes once you open it.` });
 }
 
+// Every table with a user_id column (migrations 0001 and 0002). Keep in step with migrations/.
+export const USER_TABLES = ['sessions', 'password_reset_tokens', 'email_tokens', 'user_learning_progress', 'user_activity', 'user_state',
+  'events', 'lesson_scores', 'user_position', 'stats_batches', 'key_stats', 'bigram_stats', 'error_classes', 'daily_totals', 'user_totals',
+  'xp_ledger', 'daily_quests', 'badges', 'certificates', 'placement', 'user_settings', 'workshop_unlocks', 'game_bests', 'ghost_replays',
+  'daily_results', 'feedback', 'guest_imports', 'event_rejects', 'rebuild_diffs'];
+
 /** Deletes the account and everything stored for it. Requires the password. */
 export async function deleteAccount(request, env) {
   const { user } = await requireSession(env, request);
@@ -52,8 +58,7 @@ export async function deleteAccount(request, env) {
   if (!(await verifyPassword(String(body.password || ''), row.password_hash))) throw fieldError({ password: "That isn't your password." });
   // foreign keys cascade these, but deleting them explicitly doesn't depend on that setting
   await env.DB.batch([
-    ...['sessions', 'password_reset_tokens', 'email_tokens', 'user_learning_progress', 'user_activity', 'user_state']
-      .map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE user_id = ?1`).bind(user.id)),
+    ...USER_TABLES.map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE user_id = ?1`).bind(user.id)),
     env.DB.prepare('DELETE FROM rate_limits WHERE key = ?1').bind(`login-fail:${user.email}`),
     env.DB.prepare('DELETE FROM users WHERE id = ?1').bind(user.id),
   ]);
