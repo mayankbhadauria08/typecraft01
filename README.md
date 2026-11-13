@@ -2,7 +2,7 @@
 
 An intelligent, gamified typing tutor that turns repetitive finger drills into a structured course *and* an arcade experience. It tracks precise typing behavior — not just WPM — to give personalized coaching, then lets you burn off the practice as an actual game.
 
-Runs entirely in the browser. No build step, no server, no dependencies — the whole app is a single `index.html` file.
+The whole app is a single `index.html` file with no build step and no dependencies. It runs entirely in the browser; an optional Cloudflare Worker + D1 backend (`src/`) adds accounts, so progress follows you to any browser or device. See [SETUP.md](SETUP.md).
 
 ---
 
@@ -29,6 +29,12 @@ Runs entirely in the browser. No build step, no server, no dependencies — the 
 * **Metronome Rhythm Challenge:** A selectable-BPM click track (60–120 BPM) sets the beat — typing within the timing window builds a combo multiplier; drifting off-beat resets it.
 * **Tug-of-War:** Race a bot typist at a speed you choose (30–80 WPM). Every correct keystroke pulls a rope-and-flag visual toward you in real time; the bot pulls back at a steady pace.
 
+### 👤 Accounts (optional)
+* Sign up / sign in with email and password; profile, change password, forgot password (email via Resend), sign out everywhere, delete account.
+* **My learning** page: completed / in progress / remaining lessons, overall progress, last activity, recent runs, and a Continue button.
+* Progress saves to the server automatically as you type: lessons, stars, best WPM, per-key stats, streak, and the lesson and stage you were on. Sign in on another device and carry on where you left off.
+* Without signing in, everything works as before. Guest progress can be added to a new account once, and is never overwritten.
+
 ### 📊 Progress & Feedback
 * Live **time / WPM / accuracy / error** stats updated as you type (WPM counts only correct characters still on the page, so backspacing and retyping can't inflate it), plus an end-of-lesson **WPM-over-time graph** (Canvas-drawn) with an accuracy overlay.
 * A **daily streak counter** that tracks consecutive practice days.
@@ -43,15 +49,20 @@ Runs entirely in the browser. No build step, no server, no dependencies — the 
 * **Game & Graph Engine:** Vanilla JavaScript (ES6+), HTML5 Canvas API (Space Invaders rendering, WPM graph)
 * **Audio:** Web Audio API — mechanical-click and error sounds are synthesized oscillators, no audio files
 * **State & Persistence:** `localStorage` — lesson progress/stars, streak, per-key accuracy stats, key-transition latency, error classifications, theme, and feedback all persist locally in your browser
-* **No backend:** everything above runs client-side; feedback and analytics never leave your machine
+* **Backend (optional, for accounts):** a Cloudflare Worker (`src/`) with a Cloudflare D1 database (`migrations/`). Without it, everything runs client-side and nothing leaves your machine. With it, signed-in progress lives in D1. Feedback always stays local.
 
 ### 📂 File Structure
 
 Unlike a typical multi-file project, TypeCraft is intentionally a **single self-contained file** — easier to share, host, or drop into any static site with zero setup:
 
 ```text
-├── index.html     # The entire app — markup, styles, and all JS logic in one file
-└── README.md      # This file
+├── index.html       # The entire app — markup, styles, and all JS logic in one file
+├── src/             # Cloudflare Worker: /api/* for accounts and progress
+├── migrations/      # D1 database tables
+├── tests/           # API tests + a local test server (Node 22.13+)
+├── wrangler.jsonc   # Worker config (static assets + D1 binding)
+├── SETUP.md         # How to switch on accounts
+└── README.md        # This file
 ```
 
 Everything that would normally live in `src/components`, `src/games`, `src/telemetry`, and `src/bot` in a larger app instead lives as clearly commented sections inside `index.html`'s single `<script>` block:
@@ -69,7 +80,8 @@ index.html
  ├─ 9. Fun Mode — Space Invaders
  ├─ 10. Fun Mode — Metronome Rhythm Challenge
  ├─ 11. Fun Mode — Tug-of-War
- └─ 12. Feedback box
+ ├─ 12. Feedback box
+ └─ 13. Accounts (sign in, profile, automatic progress sync)
 ```
 
 ---
@@ -101,5 +113,4 @@ Ideas not yet built, in rough order of interest:
 - [ ] **Bomb Defusal mode** — symbol-heavy strings under a countdown; errors cut time.
 - [ ] **Ghost/Shadow racing** — race your own historical average instead of (or alongside) the bot.
 - [ ] **Fatigue detection** — flag accuracy drops mid-session and suggest a break.
-- [ ] Optional cloud sync, so progress isn't tied to a single browser.
 - [ ] Custom mechanical-keyboard sound profiles (blue/red/brown switch clicks).

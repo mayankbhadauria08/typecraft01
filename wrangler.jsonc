@@ -1,0 +1,35 @@
+// Cloudflare Worker configuration for TypeCraft (see SETUP.md).
+// index.html (and anything else not listed in .assetsignore) is served as a
+// static asset; only /api/* runs the Worker code in src/.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "typecraft01",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // ACCOUNTS DATABASE (SETUP.md, step 2): once the D1 database "typecraft" exists,
+  // remove the two slashes in front of each of the 8 lines below and paste its ID.
+  // Until then the site works exactly as before, without accounts.
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "typecraft",
+  //     "database_id": "PASTE_YOUR_D1_DATABASE_ID_HERE",
+  //     "migrations_dir": "migrations"
+  //   }
+  // ],
+
+  // Email settings (RESEND_API_KEY, EMAIL_FROM, optional APP_URL) are set as
+  // secrets in the Cloudflare dashboard, never in this file. keep_vars stops a
+  // deploy from removing anything set there.
+  "keep_vars": true,
+
+  // daily clean-up of expired sessions and links (02:47 India time)
+  "triggers": { "crons": ["17 21 * * *"] },
+  "observability": { "enabled": true }
+}
