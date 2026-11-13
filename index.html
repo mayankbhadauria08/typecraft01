@@ -2382,14 +2382,17 @@ function leaveAccount(){
   if(document.getElementById('accountView').style.display !== 'none') backToDashboard();
   reloadLearningState();
 }
+/* the sign-in page (login.html); the server sends it to anyone who isn't signed in */
+function goToSignIn(query){
+  try{ localStorage.removeItem(ACCOUNT_CACHE_KEY); }catch(e){}
+  location.replace('/login' + (query ? '?' + query : ''));
+}
 function handleSessionEnded(){
   if(!Account.user) return;
   const email = Account.user.email;
-  leaveAccount(); // the save queue stays in this browser and is sent after you sign in again
-  toast('Your session has ended. Sign in again to keep saving to your account.');
-  openAuth('signin');
-  const f = document.querySelector('#authModal form[data-mode="signin"]');
-  f.elements.email.value = email;
+  Sync.reset(); // the save queue stays in this browser and is sent after you sign in again
+  Account.user = null;
+  goToSignIn('expired=1&email=' + encodeURIComponent(email));
 }
 async function signOut(force){
   closeAccountMenu();
@@ -2401,8 +2404,8 @@ async function signOut(force){
   }
   Account.forceNextSignOut = false;
   await api('POST', '/api/auth/logout', {});
-  leaveAccount();
-  toast('Signed out. Your progress is saved in your account.');
+  Sync.reset(); Account.user = null;
+  goToSignIn('signedout=1');
 }
 
 /* ---- header: sign-in button / account menu ---- */
@@ -2548,7 +2551,8 @@ authForm('reset').addEventListener('submit', (ev) => {
     const res = await api('POST', '/api/auth/reset-password', { token:Account.resetToken, password:v.password, confirmPassword:v.confirmPassword });
     if(!res.ok) return showApiError(form, res);
     Account.resetToken = null;
-    if(Account.user) leaveAccount();
+    // a reset signs out every device, this one included
+    if(Account.user){ Sync.reset(); Account.user = null; return goToSignIn('signedout=1'); }
     setAuthMode('signin');
     showForm(authForm('signin'), {}, res.message, false);
   });
@@ -2753,8 +2757,8 @@ document.getElementById('signOutAllBtn').addEventListener('click', async () => {
   if(!synced){ msg.textContent = "Some progress hasn't reached the server yet. Check your connection and try again."; msg.classList.add('error'); return; }
   const res = await api('POST', '/api/auth/logout-all', {});
   if(!res.ok && res.status !== 401){ msg.textContent = (res.error && res.error.message) || 'Please try again.'; msg.classList.add('error'); return; }
-  leaveAccount();
-  toast('Signed out on every device.');
+  Sync.reset(); Account.user = null;
+  goToSignIn('signedout=1');
 });
 let deleteArmedUntil = 0;
 document.getElementById('deleteAccountForm').addEventListener('submit', (ev) => {
@@ -2774,9 +2778,8 @@ document.getElementById('deleteAccountForm').addEventListener('submit', (ev) => 
     if(res.status === 401) return handleSessionEnded();
     if(!res.ok) return showApiError(form, res);
     try{ localStorage.removeItem(Sync.key()); }catch(e){}
-    form.reset();
-    leaveAccount();
-    toast(res.message);
+    Sync.reset(); Account.user = null;
+    goToSignIn('deleted=1');
   });
   btn.textContent = 'Delete my account';
 });
@@ -2821,7 +2824,7 @@ async function initAccount(){
   if(!res.ok || !('user' in res)){ Account.available = false; renderAccountUi(); return; } // no accounts backend here: guest mode only
   Account.available = true; Account.emailEnabled = !!res.emailEnabled;
   if(res.user) await enterAccount(res.user);
-  else { try{ localStorage.removeItem(ACCOUNT_CACHE_KEY); }catch(e){} renderAccountUi(); }
+  else { try{ localStorage.removeItem(ACCOUNT_CACHE_KEY); }catch(e){} return goToSignIn(''); } // the app is for signed-in users
   if(action) handleHashAction(action);
 }
 

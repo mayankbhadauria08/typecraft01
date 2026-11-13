@@ -1,6 +1,7 @@
 // TypeCraft Worker: serves index.html as a static asset and handles /api/* for
 // accounts and progress. Static files never reach this code (see wrangler.jsonc).
 import { HttpError, json, errorResponse, assertSameOriginWrite } from './http.js';
+import { getSession } from './session.js';
 import * as auth from './auth.js';
 import * as account from './account.js';
 import * as progress from './progress.js';
@@ -44,9 +45,46 @@ async function handleApi(request, env, ctx) {
   return handler(request, env, ctx);
 }
 
+// The app is only sent to signed-in browsers: everyone else gets the sign-in page.
+const APP_PATHS = new Set(['/', '/index.html']);
+const LOGIN_PATHS = new Set(['/login', '/login.html']);
+const PAGE_HEADERS = {
+  'Cache-Control': 'no-store, private',  // a page depends on who is signed in, so no cache may keep it
+  'Vary': 'Cookie',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'same-origin',
+};
+
+async function asset(env, request, path, extraHeaders = {}) {
+  const res = await env.ASSETS.fetch(new Request(new URL(path, request.url), { method: 'GET', headers: request.headers }));
+  const headers = new Headers(res.headers);
+  for (const [k, v] of Object.entries({ ...PAGE_HEADERS, ...extraHeaders })) headers.set(k, v);
+  return new Response(res.body, { status: res.status, headers });
+}
+function redirect(request, path) {
+  return new Response(null, { status: 302, headers: { Location: new URL(path, request.url).toString(), 'Cache-Control': 'no-store' } });
+}
+
+async function servePage(request, env) {
+  const { pathname } = new URL(request.url);
+  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405 });
+  // no database connected: there are no accounts, so the app works as a guest-only app, as it did before
+  if (!env.DB) return LOGIN_PATHS.has(pathname) ? redirect(request, '/') : asset(env, request, '/index.html');
+
+  let session = null;
+  try { session = await getSession(env, request); } catch { session = null; } // tables missing: treated as signed out
+  const renew = session && session.setCookie ? { 'Set-Cookie': session.setCookie } : {};
+  if (LOGIN_PATHS.has(pathname)) return session ? redirect(request, '/') : asset(env, request, '/login.html');
+  if (pathname === '/index.html') return redirect(request, '/');
+  // "/" keeps its address either way, so links like /#reset=… reach whichever page is shown
+  return session ? asset(env, request, '/index.html', renew) : asset(env, request, '/login.html');
+}
+
 export default {
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
+    if (APP_PATHS.has(pathname) || LOGIN_PATHS.has(pathname)) return servePage(request, env);
     if (pathname.startsWith('/api/')) {
       try {
         return await handleApi(request, env, ctx);

@@ -1,6 +1,6 @@
 // Cloudflare Worker configuration for TypeCraft (see SETUP.md).
-// index.html (and anything else not listed in .assetsignore) is served as a
-// static asset; only /api/* runs the Worker code in src/.
+// index.html (the app) is only sent to signed-in browsers; everyone else gets
+// login.html. /api/* runs the Worker code in src/.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "typecraft01",
@@ -9,7 +9,10 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    // the API, and the pages that depend on whether you are signed in, go through the Worker
+    "run_worker_first": ["/api/*", "/", "/index.html", "/login", "/login.html"],
+    // files are served at their exact paths (the Worker asks for /index.html and /login.html)
+    "html_handling": "none"
   },
 
   // ACCOUNTS DATABASE (SETUP.md, step 2): the D1 database "typecraft".

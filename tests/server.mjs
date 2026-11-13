@@ -14,8 +14,9 @@ export function makeEnv(extra = {}) {
   const DB = new D1Shim();
   DB.applyMigrations(path.join(root, 'migrations'));
   const ASSETS = { fetch: async (req) => {
+    // like Workers static assets with html_handling "none": files at their exact paths only
     const p = new URL(req.url).pathname;
-    if (p === '/' || p === '/index.html') return new Response(readFileSync(path.join(root, 'index.html')), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    if (p === '/index.html' || p === '/login.html') return new Response(readFileSync(path.join(root, p.slice(1))), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     return new Response('Not found', { status: 404 });
   } };
   return { DB, ASSETS, EMAIL_FROM: '', ...extra };
