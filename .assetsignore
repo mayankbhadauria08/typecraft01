@@ -1,0 +1,16 @@
+# Only the app itself is public. Everything else in the repo stays private.
+.git
+.github
+.wrangler
+node_modules
+src
+migrations
+tests
+wrangler.jsonc
+wrangler.toml
+package.json
+package-lock.json
+.dev.vars*
+.assetsignore
+README.md
+SETUP.md
