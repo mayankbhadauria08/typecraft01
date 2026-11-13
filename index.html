@@ -348,6 +348,7 @@ button,select,textarea,input{font-family:var(--mono);}
         <div class="streak-display" title="Consecutive days practiced"><svg class="nb-svg" viewBox="0 0 16 16" aria-hidden="true"><path d="M8.2 1.6c.3 2.3 3.6 3.6 3.6 7.1a3.8 3.8 0 0 1-7.6 0c0-1.5.7-2.6 1.6-3.4.1 1 .5 1.7 1.2 2.1-.3-2.2.2-4.2 1.2-5.8z"/></svg><b id="streakCount">0</b><span class="streak-label">day streak</span></div>
         <button id="funModeBtn" class="nav-btn" title="Arcade mini-games"><svg class="nb-svg" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.5" width="13" height="7.5" rx="3.75"/><path d="M5.25 6.75v3M3.75 8.25h3M10.3 7.4h.01M12.1 9.1h.01"/></svg>fun mode</button>
         <button id="feedbackBtn" class="nav-btn" title="Send feedback"><svg class="nb-svg" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3h9A1.5 1.5 0 0 1 14 4.5v5a1.5 1.5 0 0 1-1.5 1.5H8l-3 2.6V11H3.5A1.5 1.5 0 0 1 2 9.5v-5A1.5 1.5 0 0 1 3.5 3z"/></svg>feedback</button>
+        <button id="soundToggle" class="nav-btn" title="Key sounds: click to switch between on, low and off"></button>
         <button id="themeToggle" class="nav-btn" title="Switch between the ink (dark) and paper (light) themes"></button>
       </div>
     </header>
@@ -386,7 +387,7 @@ button,select,textarea,input{font-family:var(--mono);}
             <div class="text-display" id="textDisplay"></div>
             <textarea id="typer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
-          <div class="start-hint" id="startHint"><span>click here, then just start typing</span></div>
+          <div class="start-hint" id="startHint"><span>just start typing</span></div>
         </div>
 
         <div class="stats-row">
@@ -601,110 +602,130 @@ button,select,textarea,input{font-family:var(--mono);}
 
 <script>
 /* ==========================================================================
-   1. LESSON PLAN — copied from the Carriage curriculum (24 lessons, 4 tiers),
-      now extended with word + paragraph drills on every lesson.
+   1. LESSON PLAN — 24 lessons, 6 tiers.
+      `teach` lists the characters a lesson introduces; a lesson may only use
+      characters taught by itself or an earlier lesson (capitals only after
+      the Shift lesson). Lesson ids are permanent: saved progress is keyed by
+      them, so lessons can be reordered but never renumbered.
    ========================================================================== */
 const lessons = [
-  { id:'l1', tier:'Beginner — Home Row', keys:['F','J'], title:'Home Base',
-    charDrill:"fff jjj fj fj jf jf fjf jfj ff jj fjfj jfjf",
-    wordDrill:["fjf","jfj","ffj","jff","fjfj","jfjf","ffjj","jjff","fjj"],
-    paragraphDrill:"fjf jfj ffj jff. fjfj jfjf ffjj jjff. fjj jff fjf jfj. ff jj fj jf." },
-  { id:'l2', tier:'Beginner — Home Row', keys:['D','K'], title:'Adding D & K',
-    charDrill:"ddd kkk dk dk kd kd dkd kdk fjdk kdjf",
-    wordDrill:["dkd","kdk","fdk","kfj","djk","kjd","fkd","dkf"],
-    paragraphDrill:"dkd kdk fdk kfj. djk kjd fkd dkf. fj dk kd fj. dd kk fj jd." },
-  { id:'l3', tier:'Beginner — Home Row', keys:['S','L'], title:'Adding S & L',
-    charDrill:"sss lll sl sl ls ls sls lsl fjdksl lskdjf",
-    wordDrill:["sld","lsd","fsl","klsd","dsl","lfk","skl","lsk"],
-    paragraphDrill:"sld lsd fsl klsd. dsl lfk skl lsk. sl ls fj dk. ss ll fj jd." },
-  { id:'l4', tier:'Beginner — Home Row', keys:['A',';'], title:'Adding A & ;',
+  { id:'l1', tier:'Beginner — Home Row', keys:['F','J'], teach:'fj', title:'Home Base',
+    charDrill:"fff jjj fj fj jf jf fjf jfj ff jj fjfj jfjf" },
+  { id:'l2', tier:'Beginner — Home Row', keys:['D','K'], teach:'dk', title:'Adding D & K',
+    charDrill:"ddd kkk dk dk kd kd dkd kdk fjdk kdjf" },
+  { id:'l3', tier:'Beginner — Home Row', keys:['S','L'], teach:'sl', title:'Adding S & L',
+    charDrill:"sss lll sl sl ls ls sls lsl fjdksl lskdjf" },
+  { id:'l4', tier:'Beginner — Home Row', keys:['A',';'], teach:'a;', title:'Adding A & ;',
     charDrill:"aaa ;;; a; a; ;a ;a a;a ;a; fjdksla ;alskdjf",
     wordDrill:["dad","sad","lad","ask","add","fads","flask","salad","salsa","alfalfa"],
-    paragraphDrill:"a lad asks a dad; a sad lad adds a flask. salad falls; salsa falls; a lass asks a lad. alfalfa falls; add a flask; ask a lass." },
-  { id:'l5', tier:'Beginner — Home Row', keys:['G','H'], title:'Filling In G & H',
+    paragraphDrill:"a lad asks a dad; a sad lad adds a flask; salad falls; salsa falls; a lass asks a lad; alfalfa falls; add a flask; ask a lass" },
+  { id:'l5', tier:'Beginner — Home Row', keys:['G','H'], teach:'gh', title:'Filling In G & H',
     charDrill:"ggg hhh gh gh hg hg ghg hgh half glass flash",
     wordDrill:["half","glass","flash","gala","gash","hall","lag","gas","ask","flask"],
-    paragraphDrill:"a lad has a flask; a gala had a glass. glass falls; a flash; a gash; ask a lass. half a salad falls; add a dash salsa." },
-  { id:'l6', tier:'Beginner — Home Row', keys:['fluency'], title:'Home Row Fluency',
+    paragraphDrill:"a lad has a flask; a gala had a glass; glass falls; a flash; a gash; ask a lass; half a salad falls; add a dash salsa" },
+  { id:'l6', tier:'Beginner — Home Row', keys:['fluency'], teach:'', title:'Home Row Fluency',
     charDrill:"asdfghjkl; ;lkjhgfdsa asdf jkl; fdsa lkj;",
     wordDrill:["flask","glass","salad","salsa","alfalfa","half","flash","gala","ask","lass"],
-    paragraphDrill:"dad had a flask; a lad asks a lass; glass falls; salsa gala; ask dad; a sad lad had a glass flask; all glass falls; add salsa; ask a lass." },
+    paragraphDrill:"dad had a flask; a lad asks a lass; glass falls; salsa gala; ask dad; a sad lad had a glass flask; all glass falls; add salsa; ask a lass" },
 
-  { id:'l7', tier:'Intermediate — Top Row', keys:['E','I'], title:'Reaching for E & I',
+  { id:'l7', tier:'Intermediate — Top Row', keys:['E','I'], teach:'ei', title:'Reaching for E & I',
     charDrill:"eee iii ei ei ie ie eie iei fjdksl eifj iehg",
     wordDrill:["side","hide","life","aide","die","lid","kid","field","shield","dial"],
-    paragraphDrill:"a kid hides a die; a shield aids a lad. life is a gas; a field lies; a lass hides a lid; a die falls; a kid slides." },
-  { id:'l8', tier:'Intermediate — Top Row', keys:['R','T'], title:'Reaching for R & T',
+    paragraphDrill:"a kid hides a die; a shield aids a lad; life is a gas; a field lies; a lass hides a lid; a die falls; a kid slides" },
+  { id:'l8', tier:'Intermediate — Top Row', keys:['R','T'], teach:'rt', title:'Reaching for R & T',
     charDrill:"rtrt trtr rt tr rat tar art trade dirt",
     wordDrill:["rat","tar","art","dirt","trail","start","stare","tire","tired","state"],
-    paragraphDrill:"the star has light; dirt hides the tale. a trail leads a kid; a rat starts a fire; a lid falls; her sister stares. she stirs the salad; a tired girl rests." },
-  { id:'l9', tier:'Intermediate — Top Row', keys:['W','O'], title:'Reaching for W & O',
+    paragraphDrill:"the star has light; dirt hides the tale; a trail leads a kid; a rat starts a fire; a lid falls; her sister stares; she stirs the salad; a tired girl rests" },
+  { id:'l9', tier:'Intermediate — Top Row', keys:['W','O'], teach:'wo', title:'Reaching for W & O',
     charDrill:"wo ow wow low tow flow slow throw shadow",
     wordDrill:["low","tow","flow","slow","throw","shadow","word","grow","glow","wood"],
-    paragraphDrill:"the old fowl was slow to grow. a low tide throws a shadow; a word of gold falls. she rows to shore; a girl trades a dirt trail for a low road." },
-  { id:'l10', tier:'Intermediate — Top Row', keys:['Q','P'], title:'Reaching for Q & P',
-    charDrill:"qp pq quip pat quiet pot pet pit",
-    wordDrill:["pat","pet","pit","pot","quip","quiet","pale","plot","spot","past"],
-    paragraphDrill:"the pilot quit; a quiet pet ate a pie. she kept a pet goat; a plot was set apart. a pilot ate a pear at rest; the spot was pale." },
-  { id:'l11', tier:'Intermediate — Top Row', keys:['Y','U'], title:'Reaching for Y & U',
-    charDrill:"yu uy your true study dirty truth",
-    wordDrill:["your","true","study","dirty","truth","quiet","story","juicy","sturdy","tour"],
-    paragraphDrill:"your dirty truth stays quiet at dusk. a study of trust guides you truly; a story tours the world. she tries to write it slowly." },
-  { id:'l12', tier:'Intermediate — Numbers', keys:['1','2','3','4','5'], title:'Number Row: 1–5',
+    paragraphDrill:"the old fowl was slow to grow; a low tide throws a shadow; a word of gold falls; she rows to shore; a girl trades a dirt trail for a low road" },
+  { id:'l10', tier:'Intermediate — Top Row', keys:['U','P'], teach:'up', title:'Reaching for U & P',
+    charDrill:"up pu pup put pat pot pet pit pull push",
+    wordDrill:["put","pup","pull","push","pure","pour","plus","pile","upset","output","spout","path"],
+    paragraphDrill:"she put the pup out; a pilot pours a hot drip; the plot was set apart; push the pail up the path; the spot was pale" },
+  { id:'l11', tier:'Intermediate — Top Row', keys:['Y','Q'], teach:'yq', title:'Reaching for Y & Q',
+    charDrill:"yq qy yes yet quit quiet quest year",
+    wordDrill:["your","yes","yet","quit","quiet","quest","quote","query","story","study","sturdy","truly"],
+    paragraphDrill:"your quiet quest stays true at dusk; a study of trust guides you truly; a story tours the world; she tries to quote it slowly" },
+  { id:'l12', tier:'Intermediate — Numbers', keys:['1','2','3','4','5'], teach:'12345', title:'Number Row: 1–5',
     charDrill:"1 2 3 4 5 11 22 33 a1 s2 d3 f4 g5",
-    wordDrill:["12","34","51","23","45","102","215","304","521","413"],
-    paragraphDrill:"flight 415 departs at gate 23; the code is 512. she has 21 keys; 34 pages hold a total of 125." },
-  { id:'l13', tier:'Intermediate — Numbers', keys:['6','7','8','9','0'], title:'Number Row: 6–0',
+    wordDrill:["12","34","51","23","45","142","215","314","521","413"],
+    paragraphDrill:"flight 415 departs at gate 23; the door is 512; she has 21 keys; 34 pages hold a total of 125" },
+  { id:'l13', tier:'Intermediate — Numbers', keys:['6','7','8','9','0'], teach:'67890', title:'Number Row: 6–0',
     charDrill:"6 7 8 9 0 67 89 90 606 707",
     wordDrill:["67","89","90","1990","2024","60","78","906","1000","250"],
-    paragraphDrill:"the year 1990 had 60 degree days; 78 people saw 90 stars. she kept a diary of 250 pages; a total of 1000 words." },
+    paragraphDrill:"the year 1990 had 60 hot days; 78 people saw 90 stars; she kept a diary of 250 pages; a total of 1000 words" },
 
-  { id:'l14', tier:'Advanced — Bottom Row', keys:['V','M'], title:'Reaching for V & M',
+  { id:'l14', tier:'Advanced — Bottom Row', keys:['V','M'], teach:'vm', title:'Reaching for V & M',
     charDrill:"vm mv move have make time game visit",
-    wordDrill:["move","have","make","time","game","mile","visit","voice","value","smile"],
-    paragraphDrill:"we move a mile every visit; make more time. a voice of value stays; she gives a warm smile. a movie starts the same day." },
-  { id:'l15', tier:'Advanced — Bottom Row', keys:['C',','], title:'Reaching for C & ,',
+    wordDrill:["move","have","make","time","game","mile","visit","vivid","value","smile"],
+    paragraphDrill:"we move a mile every visit; make more time; a vivid memory stays; she gives a warm smile; a movie starts the same day" },
+  { id:'l18', tier:'Advanced — Bottom Row', keys:['B','N'], teach:'bn', title:'Reaching for B & N',
+    charDrill:"bn nb ban bun born barn bank bright",
+    wordDrill:["ban","bun","born","barn","bank","bright","bunny","between","brand","begin"],
+    paragraphDrill:"a bright bunny ran between the barn and the bank; a new brand began; she will begin a new plan now" },
+  { id:'l15', tier:'Advanced — Bottom Row', keys:['C',','], teach:'c,', title:'Reaching for C & ,',
     charDrill:"c, ,c cat, cot, cut, come, care,",
     wordDrill:["cat","cot","cut","come","care","voice","place","close","office","race"],
-    paragraphDrill:"come here, watch closely, then act, please. a cat sat, a cot moved, a voice spoke clearly, calm, slow, quiet." },
-  { id:'l16', tier:'Advanced — Bottom Row', keys:['X','.'], title:'Reaching for X & .',
+    paragraphDrill:"come here, watch closely, then act, please; a cat sat, a cot moved, a voice spoke clearly, calm, slow, quiet" },
+  { id:'l16', tier:'Advanced — Bottom Row', keys:['X','.'], teach:'x.', title:'Reaching for X & .',
     charDrill:"x. .x fox. box. mix. fix. next. exit.",
     wordDrill:["fox","box","mix","fix","exit","next","text","sixty","taxi","relax"],
     paragraphDrill:"the fox sat next to a box. it was fixed. a text was mailed. sixty taxis exit at rest." },
-  { id:'l17', tier:'Advanced — Bottom Row', keys:['Z','/'], title:'Reaching for Z & /',
+  { id:'l17', tier:'Advanced — Bottom Row', keys:['Z','/'], teach:'z/', title:'Reaching for Z & /',
     charDrill:"z/ /z size zone maze/ lazy hazy dozer",
     wordDrill:["size","zone","maze","lazy","hazy","zero","amaze","gaze","haze","doze"],
     paragraphDrill:"a lazy fox grazed near the size of a maze. a hazy haze filled the zone at dusk. a dozer moves slowly, a gaze holds steady." },
-  { id:'l18', tier:'Advanced — Bottom Row', keys:['B','N'], title:'Reaching for B & N',
-    charDrill:"bn nb ban bun born barn bank bright",
-    wordDrill:["ban","bun","born","barn","bank","bright","bunny","between","brand","begin"],
-    paragraphDrill:"a bright bunny ran between the barn and the bank. a new brand began. she can begin any plan now." },
-  { id:'l19', tier:'Advanced — Shift & Symbols', keys:['Shift'], title:'Shift & Capitals',
+  { id:'l19', tier:'Advanced — Shift & Symbols', keys:['Shift'], teach:'', shift:true, title:'Shift & Capitals',
     charDrill:"The Cat The Dog A Big Apple New York",
     wordDrill:["The","Cat","Monday","New York","London","Tokyo","Begins","Now","Capital","Title"],
-    paragraphDrill:"The Cat Sat. Monday Begins Now. New York, London, and Tokyo are big cities. Every Title deserves a Capital Letter." },
-  { id:'l20', tier:'Advanced — Shift & Symbols', keys:['" ! $ % @'], title:'Punctuation & Symbols',
-    charDrill:'! @ # $ % & * ( ) - _ = +',
-    wordDrill:["$12.50","8%","(about)","name@example.com","555-123-4567","\"Wait!\"","he said,","costs $5","call now:","email me"],
-    paragraphDrill:'He said, "Wait!" then left; it costs $12.50 about 8%. Email me at name@example.com or call 555-123-4567.' },
+    paragraphDrill:"The Cat Sat. Monday Begins Now. New York, London, and Tokyo are big cities. Every Title deserves a Capital Letter.",
+    paragraphs:["Paris, Rome, and Berlin are old cities. Maria and James met in Lisbon on a Friday in June. The Atlantic Ocean lies between Europe and North America."] },
+  { id:'l20', tier:'Advanced — Shift & Symbols', keys:['!','@','#','$','%','&','*','(',')','-','_','=','+',"'",'"','?',':'], teach:`!@#$%&*()-_=+'"?:`, title:'Punctuation & Symbols',
+    charDrill:`! @ # $ % & * ( ) - _ = + ' " ? : it's don't why? note: (a) 2+2=4 50%`,
+    wordDrill:["$12.50","8%","(about)","name@example.com","555-123-4567","\"Wait!\"","he said,","costs $5","call now:","email me","don't","it's","why?","#1","a&b","x=y+1","snake_case"],
+    paragraphDrill:`He said, "Wait!" then left; it costs $12.50, about 8%. Isn't that odd? Email me at name@example.com or call 555-123-4567.`,
+    paragraphs:[`Don't panic: the file (report_v2) is 98% done & due at 5 pm. Can you check it? Use #urgent if it's late, or email ops@example.com.`] },
 
-  { id:'l21', tier:'Mastery — Fluency', keys:['speed'], title:'Common Words Sprint',
+  { id:'l21', tier:'Mastery — Fluency', keys:['speed'], teach:'', title:'Common Words Sprint',
     charDrill:"th he in er an re nd at on nt ha es",
     wordDrill:["the","and","for","you","are","with","this","that","from","have","they","will","one","all","can"],
-    paragraphDrill:"The most common words in English carry most of everyday writing. Once they are automatic, your hands barely pause between them, and your speed climbs on its own." },
-  { id:'l22', tier:'Mastery — Fluency', keys:['sentences'], title:'Sentence Fluency',
+    paragraphDrill:"The most common words in English carry most of everyday writing. Once they are automatic, your hands barely pause between them, and your speed climbs on its own.",
+    paragraphs:[
+      "People often think good typists move their fingers quickly, but the real secret is that they never stop to search for a key. Every word you use each day is a chance to practice that calm, steady flow.",
+      "Short words like the, and, for, and with appear in almost every sentence you write. When your hands know them by heart, longer words feel easier, because there is less to think about between them."] },
+  { id:'l22', tier:'Mastery — Fluency', keys:['sentences'], teach:'', title:'Sentence Fluency',
     charDrill:"th he in er an re nd at on",
     wordDrill:["market","customers","coffee","brewed","quiet","street","busy","minutes","early","arrive"],
-    paragraphDrill:"The market opens early, and the first customers arrive before the coffee is even brewed. A quiet street turns busy within minutes." },
-  { id:'l23', tier:'Mastery — Fluency', keys:['paragraph'], title:'Paragraph Practice',
+    paragraphDrill:"The market opens early, and the first customers arrive before the coffee is even brewed. A quiet street turns busy within minutes.",
+    paragraphs:[
+      "The train left the station a few minutes late, but nobody seemed to mind. Most passengers had a book, a coffee, or a window to look out of, and the morning light made the fields glow.",
+      "A good recipe tells you what to do, but a good cook knows why. Taste as you go, keep your knife sharp, and clean up while the water boils, so the kitchen never gets ahead of you."] },
+  { id:'l23', tier:'Mastery — Fluency', keys:['paragraph'], teach:'', title:'Paragraph Practice',
     charDrill:"th he in er an re nd at on nt",
     wordDrill:["rhythm","fingers","keyboard","mechanics","disappear","practice","fluency","goal","mind","free"],
-    paragraphDrill:"Learning to type well is less about speed and more about rhythm. Once your fingers know the keyboard, your mind is free to think about the words instead of where your hands need to go. That is the real goal of practice: to make the mechanics disappear." },
-  { id:'l24', tier:'Mastery — Fluency', keys:['certification'], title:'Timed Challenge',
+    paragraphDrill:"Learning to type well is less about speed and more about rhythm. Once your fingers know the keyboard, your mind is free to think about the words instead of where your hands need to go. That is the real goal of practice: to make the mechanics disappear.",
+    paragraphs:[
+      "Every skill has a stage where progress feels slow and the gains are hard to see. That is usually the moment when the most important change is happening, because your habits are being rebuilt underneath the surface. Keep showing up, and one day the new way will simply feel normal.",
+      "Look at the screen, not at your hands. At first this makes you slower and you will make more mistakes, which is frustrating. But each time you resist the urge to glance down, your fingers learn the map a little better, until the keyboard becomes something you feel rather than see."] },
+  { id:'l24', tier:'Mastery — Fluency', keys:['60 seconds'], teach:'', timed:60, title:'Timed Challenge',
     charDrill:"th he in er an re nd at on nt ha",
     wordDrill:["wrists","relaxed","reach","accurate","automatic","favor","clean","messy","daily","lasting"],
-    paragraphDrill:"Keep both wrists low and relaxed, let your fingers return to the home row after every reach, and resist the urge to look down at the keys. Speed follows naturally once accuracy becomes automatic, so favor a slow, clean pass over a fast, messy one. Small daily sessions build more lasting skill than one long, exhausting sprint." }
+    paragraphDrill:"Keep both wrists low and relaxed, let your fingers return to the home row after every reach, and resist the urge to look down at the keys. Speed follows naturally once accuracy becomes automatic, so favor a slow, clean pass over a fast, messy one. Small daily sessions build more lasting skill than one long, exhausting sprint.",
+    paragraphs:["A typing test measures two things at once: how fast you move and how often you are right. The second matters more, because every error costs time to notice and fix. Aim for a pace you can hold without stumbling, then let it climb on its own."] }
 ];
+
+/* what each lesson may use: everything taught by it and every lesson before it */
+(function computeAllowedKeys(){
+  const allowed = new Set([' ']); let shift = false;
+  lessons.forEach(l => {
+    for(const c of (l.teach || '')) allowed.add(c);
+    if(l.shift) shift = true;
+    l.allowed = new Set(allowed); l.allowShift = shift;
+    l.newLetters = [...(l.teach || '')].filter(c => /[a-z]/.test(c));
+  });
+})();
 
 const TIER_ORDER = [];
 lessons.forEach(l => { if(!TIER_ORDER.includes(l.tier)) TIER_ORDER.push(l.tier); });
@@ -713,35 +734,108 @@ const TIER_ACCENT = {
   'Advanced — Bottom Row':'#b8862b', 'Advanced — Shift & Symbols':'#d2704a', 'Mastery — Fluency':'#c0629a'
 };
 
+/* Common English words. Each lesson's word stage draws from the ones it can
+   type with the keys taught so far, preferring words with its new letters. */
+const COMMON_WORDS = ("a about above across act add after again age ago air all almost alone along also always am among an and animal another answer any appear are area arm around art as ask at away baby back bad bag ball bank base be bear beat beautiful became because become bed been before began begin behind being believe below best better between big bird black blue boat body book both bottom box boy bread break bring brother brought build built busy but buy by call came can car care carry case cat catch caught cause cell center certain chair chance change check child choose city class clean clear close cloud cold color come common cook cool copy corner could count country course cover cross cup cut dark day dear deep desk did die different dinner do does dog done door down draw dream dress drink drive drop dry during each early earth easy eat edge egg eight either else end enough even evening ever every eye face fact fair fall family far farm fast father fear feel feet few field fight fill final find fine fire first fish five floor flower fly follow food foot for force form found four free fresh friend from front fruit full game garden gave get girl give glad glass go gold gone good got grass great green ground group grow had hair half hall hand happen happy hard has hat have he head hear heard heart heat heavy held help her here high hill him his hit hold hole home hope horse hot hour house how huge idea if in inch inside into iron is island it its job join joy jump just keep kept key kind king kitchen knew know lake land large last late laugh lay lead learn least leave led left leg less let letter level lie life lift light like line list listen little live long look lost lot loud love low made main make man many map mark market may me mean meet men middle might mile milk mind minute miss moment money month moon more morning most mother mountain move much music must my name near need never new next nice night nine no noise north nose not note nothing notice now number object of off office often oil old on once one only open or order other our out over own page paint pair paper park part pass past path pay people pick picture piece place plan plant play please point poor post pull push put quick quiet quite rain ran rather reach read ready real red remember rest rich ride right ring river road rock roll room round row rule run safe said sail salt same sand sat save saw say school sea seat second see seed seem seen sell send sent set seven shall shape share sharp she ship shoe shop short should show shut side sign silent simple since sing sister sit six size skin sky sleep slow small smell smile snow so soft soil some song soon sound south space speak special speed spell spend spring square stand star start state station stay step still stone stood stop store storm story straight strange street strong study such sugar summer sun sure surface sweet swim table tail take talk tall teach team tell ten than thank that the their them then there these they thick thin thing think third this those though thought three through throw tie time tiny to today together told tomorrow too took top total touch toward town track trade train tree trip true try turn two under until up upon us use usual valley very visit voice wait walk wall want war warm was wash watch water wave way we wear weather week well went were west what wheel when where which while white who whole why wide wild will win wind window winter wish with without woman wonder wood word work world would write wrong yard year yellow yes yet you young your").split(' ');
+
 let reviewLesson = null; // synthetic lesson built from the person's weak keys
 function getLessonById(id){ return id === 'review' ? reviewLesson : lessons.find(l => l.id === id); }
+function lessonNumber(lesson){ return lessons.indexOf(lesson) + 1; }
 
 /* ==========================================================================
    2. PROCEDURAL TEXT GENERATORS (per stage)
    ========================================================================== */
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function pick(arr){ return arr[randInt(0, arr.length-1)]; }
+function shuffled(arr){ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 function generateFromTokens(tokenString){
   const tokens = tokenString.split(' ').filter(Boolean);
   const itemCount = randInt(20,30);
   const items = [];
-  for(let i=0;i<itemCount;i++){ items.push(tokens[randInt(0,tokens.length-1)]); }
+  for(let i=0;i<itemCount;i++){ items.push(pick(tokens)); }
   return items.join(' ');
 }
 function generateFromPool(pool){
   const itemCount = randInt(16,24);
   const items = [];
-  for(let i=0;i<itemCount;i++){ items.push(pool[randInt(0,pool.length-1)]); }
+  for(let i=0;i<itemCount;i++){ items.push(pick(pool)); }
   return items.join(' ');
 }
+/* letter groups from every key learned so far, half of them led by this lesson's new keys */
+function generateMixed(lesson){
+  const letters = [...lesson.allowed].filter(c => /[a-z;]/.test(c));
+  const fresh = lesson.newLetters.length ? lesson.newLetters : letters;
+  const groups = [];
+  const count = randInt(18,24);
+  for(let i=0;i<count;i++){
+    const len = randInt(2,5); let g = Math.random() < 0.5 ? pick(fresh) : pick(letters);
+    while(g.length < len) g += pick(letters);
+    groups.push(g);
+  }
+  return groups.join(' ');
+}
+
+const wordPoolCache = {};
+function wordPool(lesson){
+  if(lesson.isReview) return lesson.wordDrill || [];
+  if(wordPoolCache[lesson.id]) return wordPoolCache[lesson.id];
+  const own = lesson.wordDrill || [];
+  const fits = w => [...w].every(c => lesson.allowed.has(c));
+  // lessons that teach only digits or symbols keep to their own drill words
+  const usesNew = w => lesson.newLetters.length ? lesson.newLetters.some(c => w.includes(c)) : !lesson.teach;
+  let extra = COMMON_WORDS.filter(w => fits(w) && usesNew(w));
+  if(lesson.shift) extra = extra.map(w => Math.random() < 0.4 ? w[0].toUpperCase()+w.slice(1) : w);
+  const pool = Array.from(new Set(own.concat(extra)));
+  wordPoolCache[lesson.id] = pool;
+  return pool;
+}
+
+/* a run of sentences from the lesson's word pool, punctuated only with keys already taught */
+function generateParagraph(lesson){
+  const pool = wordPool(lesson);
+  const period = lesson.allowed.has('.'), comma = lesson.allowed.has(','), semi = lesson.allowed.has(';');
+  const sentences = [];
+  const count = randInt(4,5);
+  for(let i=0;i<count;i++){
+    const words = []; const len = randInt(4,8);
+    for(let j=0;j<len;j++) words.push(pick(pool));
+    if(comma && len > 5 && Math.random() < 0.5) words[randInt(1,len-3)] += ',';
+    let s = words.join(' ');
+    if(lesson.allowShift) s = s[0].toUpperCase() + s.slice(1);
+    sentences.push(s);
+  }
+  return sentences.join(period ? '. ' : (semi ? '; ' : ' ')) + (period ? '.' : '');
+}
+function pickParagraph(lesson){
+  const written = [lesson.paragraphDrill].concat(lesson.paragraphs || []).filter(Boolean);
+  // before the Shift lesson, freshly generated text joins the hand-written paragraph so every run differs
+  const canGenerate = !lesson.allowShift && wordPool(lesson).length >= 8;
+  const choice = canGenerate ? randInt(0, written.length + 1) : randInt(0, written.length - 1);
+  return choice < written.length ? written[choice] : generateParagraph(lesson);
+}
+/* the timed challenge: one prose paragraph from the Mastery tier at a time (keeps the clock on screen); reaching the end loads another */
+function generateTimedText(){
+  const prose = [];
+  lessons.filter(l => l.tier.startsWith('Mastery')).forEach(l => {
+    [l.paragraphDrill].concat(l.paragraphs || []).forEach(p => { if(p) prose.push(p); });
+  });
+  return pick(prose);
+}
+
 function getStagesForLesson(lesson){
   if(lesson.isReview) return (lesson.wordDrill && lesson.wordDrill.length) ? ['character','word'] : ['character'];
+  if(lesson.timed) return ['timed'];
+  // lessons 1-3 have no vowels yet, so there are no real words to type: drill the keys instead
+  if(wordPool(lesson).length < 4) return ['character','mixed'];
   return ['character','word','paragraph'];
 }
 function getStageText(lesson, stageType){
   if(stageType === 'character') return generateFromTokens(lesson.charDrill);
-  if(stageType === 'word') return generateFromPool(lesson.wordDrill);
-  return lesson.paragraphDrill; // paragraph: load cleanly, no shuffling
+  if(stageType === 'mixed') return generateMixed(lesson);
+  if(stageType === 'word') return generateFromPool(wordPool(lesson));
+  if(stageType === 'timed') return generateTimedText();
+  return pickParagraph(lesson);
 }
 
 /* ==========================================================================
@@ -779,8 +873,21 @@ const FINGER_LABEL = {lp:'Left pinky', lr:'Left ring', lm:'Left middle', li:'Lef
 
 let currentLessonId = null;
 let currentStage = 0; let stages = [];
-let currentIndex=0, totalKeystrokes=0, correctKeystrokes=0, errorCount=0, startTime=null, sampleIntervalHandle=null, wpmSamples=[], lessonFinished=false;
-const wpmValueEl=document.getElementById('statWpm'), accValueEl=document.getElementById('statAcc'), errValueEl=document.getElementById('statErr');
+// correctKeystrokes = correct characters currently on the sheet (plus finished stages);
+// backspacing over a correct letter takes it back off, so retyping can't inflate WPM
+let currentIndex=0, totalKeystrokes=0, correctKeystrokes=0, errorCount=0, startTime=null, sampleIntervalHandle=null, clockHandle=null, wpmSamples=[], lessonFinished=false;
+const wpmValueEl=document.getElementById('statWpm'), accValueEl=document.getElementById('statAcc'), errValueEl=document.getElementById('statErr'), timeValueEl=document.getElementById('statTime');
+function timedLimit(){ const l = getLessonById(currentLessonId); return (l && l.timed && stages[currentStage]==='timed') ? l.timed : 0; }
+function elapsedSeconds(){ return startTime ? (Date.now()-startTime)/1000 : 0; }
+/* the Time keycap: counts up, or down from the limit in the timed challenge (which ends at zero) */
+function updateClock(){
+  const limit = timedLimit(), elapsed = elapsedSeconds();
+  timeValueEl.textContent = (limit ? Math.max(0, limit-elapsed) : elapsed).toFixed(1)+'s';
+  if(limit){
+    updateCarriage();
+    if(elapsed >= limit && !lessonFinished) finishLesson();
+  }
+}
 
 function currentWpm(){ if(!startTime) return 0; const m=(Date.now()-startTime)/60000; return m<=0?0:Math.round((correctKeystrokes/5)/m); }
 function currentAccuracy(){ if(totalKeystrokes===0) return 100; return Math.max(0, Math.round(((totalKeystrokes-errorCount)/totalKeystrokes)*100)); }
@@ -790,7 +897,9 @@ function startTimerIfNeeded(){
   if(startTime) return;
   startTime = Date.now(); wpmSamples = [];
   sampleIntervalHandle = setInterval(()=>{ wpmSamples.push({t:(Date.now()-startTime)/1000, wpm: currentWpm()}); }, 5000);
+  clockHandle = setInterval(updateClock, 100);
 }
+function stopTimers(){ clearInterval(sampleIntervalHandle); clearInterval(clockHandle); }
 
 /* ---- per-character weak-key tracking (in-memory during session, flushed to localStorage) ---- */
 let keyStats = {};
@@ -825,14 +934,15 @@ function updateFingerGuide(){
 
 function updateCarriage(){
   const railEl = document.querySelector('.rail'); const carriageEl = document.getElementById('carriage');
-  const pct = letters.length ? Math.min(1, currentIndex/letters.length) : 0;
+  const limit = timedLimit();
+  const pct = limit ? Math.min(1, elapsedSeconds()/limit) : (letters.length ? Math.min(1, currentIndex/letters.length) : 0);
   const railWidth = railEl.clientWidth - 26;
   carriageEl.style.left = (pct*railWidth)+'px';
 }
 
 function renderStageRow(){
   const row = document.getElementById('stageRow');
-  const labels = {character:'Characters', word:'Words', paragraph:'Paragraph'};
+  const labels = {character:'Characters', mixed:'Mixed', word:'Words', paragraph:'Paragraph', timed:'60-second test'};
   row.innerHTML = stages.map((s,i)=>{
     const cls = i===currentStage ? 'current' : (i<currentStage ? 'done' : '');
     return `<span class="stage-pill ${cls}" data-stage-index="${i}" style="cursor:pointer;">${i+1}. ${labels[s]}</span>`;
@@ -848,6 +958,7 @@ function renderStageRow(){
 }
 
 function loadStage(){
+  flushPendingSkip();
   const lesson = getLessonById(currentLessonId);
   exerciseText = getStageText(lesson, stages[currentStage]);
   renderText(exerciseText);
@@ -868,10 +979,15 @@ function isAdjacentKey(a,b){
   return Math.abs(pa.row-pb.row)<=1 && Math.abs(pa.col-pb.col)<=1 && !(pa.row===pb.row && pa.col===pb.col);
 }
 
-/* ---- error-pattern classification + key-transition latency (feeds the Typing Coach) ---- */
+/* ---- error-pattern classification + key-transition latency (feeds the Typing Coach) ----
+   Every error is classified exactly once. Typing the NEXT letter in place of the
+   current one is ambiguous until the following keystroke: if that keystroke is the
+   skipped letter it was a transposition (one swap, counted once); if it carries on
+   with the letter after, a letter was skipped (omission); otherwise it is judged
+   as an ordinary slip. */
 let bigramLatency = {};   // "a>b" -> {count, totalMs}
 let errorClasses = {adjacent:0, transposition:0, omission:0, other:0};
-let lastKeyTime = null, lastExpectedChar = null, lastKeystrokeWasCorrect = true, pendingTransposition = null;
+let lastKeyTime = null, lastExpectedChar = null, lastKeystrokeWasCorrect = true, pendingSkip = null;
 
 function recordBigramLatency(pairKey, ms){
   if(ms <= 0 || ms > 3000) return; // ignore pauses (not meaningful "rhythm" data)
@@ -884,19 +1000,26 @@ function isOmissionPattern(position, typedChar){
   }
   return false;
 }
-function classifyError(expectedChar, typedChar, position){
-  let category = 'other';
-  if(pendingTransposition && pendingTransposition.expectPos===position && typedChar.toLowerCase()===pendingTransposition.skippedChar.toLowerCase()){
-    category = 'transposition'; pendingTransposition = null;
-  } else if(exerciseText[position+1] && typedChar.toLowerCase()===exerciseText[position+1].toLowerCase()){
-    pendingTransposition = { expectPos: position+1, skippedChar: expectedChar };
-    category = 'transposition';
-  } else if(isOmissionPattern(position, typedChar)){
-    category = 'omission';
-  } else if(isAdjacentKey(expectedChar, typedChar)){
-    category = 'adjacent';
+function bumpErrorClass(category){ errorClasses[category] = (errorClasses[category]||0) + 1; }
+function slipCategory(expectedChar, typedChar){ return isAdjacentKey(expectedChar, typedChar) ? 'adjacent' : 'other'; }
+function flushPendingSkip(){
+  if(!pendingSkip) return;
+  bumpErrorClass(slipCategory(pendingSkip.expected, pendingSkip.typed));
+  pendingSkip = null;
+}
+function classifyKeystroke(expectedChar, typedChar, position, isCorrect){
+  const same = (a,b) => !!a && !!b && a.toLowerCase()===b.toLowerCase();
+  if(pendingSkip){
+    const p = pendingSkip; pendingSkip = null;
+    if(position === p.expectPos && !isCorrect && same(typedChar, p.expected)){ bumpErrorClass('transposition'); return; }
+    // carrying on with the letter after means one letter was skipped: one omission, and this keystroke is part of it
+    if(position === p.expectPos && same(typedChar, exerciseText[position+1])){ bumpErrorClass('omission'); return; }
+    bumpErrorClass(slipCategory(p.expected, p.typed));
   }
-  errorClasses[category] = (errorClasses[category]||0) + 1;
+  if(isCorrect) return;
+  if(same(typedChar, exerciseText[position+1])){ pendingSkip = { expectPos: position+1, expected: expectedChar, typed: typedChar }; return; }
+  if(isOmissionPattern(position, typedChar)) bumpErrorClass('omission');
+  else bumpErrorClass(slipCategory(expectedChar, typedChar));
 }
 function saveAnalytics(){
   try{ localStorage.setItem('typingMasterBigramLatency', JSON.stringify(bigramLatency)); }catch(e){}
@@ -905,32 +1028,55 @@ function saveAnalytics(){
 function loadAnalytics(){
   try{ bigramLatency = JSON.parse(localStorage.getItem('typingMasterBigramLatency')||'{}'); }catch(e){ bigramLatency={}; }
   try{ errorClasses = JSON.parse(localStorage.getItem('typingMasterErrorClasses')||'{"adjacent":0,"transposition":0,"omission":0,"other":0}'); }catch(e){ errorClasses={adjacent:0,transposition:0,omission:0,other:0}; }
+  // tallies saved before v2 over-counted transpositions, so the error-pattern tally restarts once
+  try{
+    if(localStorage.getItem('typingMasterErrorClassesVersion') !== '2'){
+      errorClasses = {adjacent:0, transposition:0, omission:0, other:0};
+      localStorage.setItem('typingMasterErrorClassesVersion', '2');
+      localStorage.setItem('typingMasterErrorClasses', JSON.stringify(errorClasses));
+    }
+  }catch(e){}
+}
+
+/* keys meant for something else: Ctrl/Cmd/Alt shortcuts (AltGr, which Windows reports as
+   Ctrl+Alt, still types), and anything typed while the feedback box or another field is in use */
+function isShortcut(e){ return e.metaKey || (e.ctrlKey && !e.altKey) || (e.altKey && !e.ctrlKey); }
+const CAPTURE_IDS = new Set(['typer','metroTyper','towTyper']);
+function typingElsewhere(e){
+  if(!document.getElementById('feedbackModal').classList.contains('hidden')) return true;
+  const t = e.target;
+  if(!t || !t.tagName) return false;
+  const field = t.tagName==='TEXTAREA' || t.tagName==='INPUT' || t.tagName==='SELECT' || t.isContentEditable;
+  return field && !CAPTURE_IDS.has(t.id);
 }
 
 function handleKeydown(e){
-  if(e.key === 'Tab'){
-    if(lessonView.style.display !== 'none'){ e.preventDefault(); resetLesson(); }
-    return;
-  }
   const lessonOpen = lessonView.style.display !== 'none';
-  if(!lessonOpen) return;
+  if(!lessonOpen || typingElsewhere(e) || isShortcut(e)) return;
+  if(e.key === 'Tab'){ e.preventDefault(); resetLesson(); return; }
 
-  // press Space (or any key) while unfocused to jump straight in — "start lesson by pressing space"
   if(document.activeElement !== typer){
-    e.preventDefault();
     typer.focus();
-    return;
+    // a Space before the run starts just takes focus; any other key is typed straight away
+    if(e.key === ' ' && !startTime){ e.preventDefault(); return; }
   }
   if(lessonFinished) return;
   if(e.key === ' '){ e.preventDefault(); }
   if(e.key === 'Backspace'){
     e.preventDefault();
-    if(currentIndex>0){ currentIndex--; letters[currentIndex].className='letter default'; updateCaretPosition(); updateCarriage(); updateFingerGuide(); }
+    if(currentIndex>0){
+      currentIndex--;
+      if(letters[currentIndex].classList.contains('correct')) correctKeystrokes--;
+      letters[currentIndex].className='letter default';
+      lastKeystrokeWasCorrect = false; // the next interval includes a correction, so it isn't rhythm data
+      updateCaretPosition(); updateCarriage(); updateFingerGuide(); updateStatsDisplay();
+    }
     return;
   }
   if(IGNORED_KEYS.has(e.key)) return;
   if(e.key.length>1 && e.key!=='Enter') return;
   if(currentIndex>=letters.length) return;
+  e.preventDefault();
 
   const inputChar = (e.key==='Enter') ? '\n' : e.key;
   const expectedChar = exerciseText[currentIndex];
@@ -938,6 +1084,7 @@ function handleKeydown(e){
 
   const isCorrect = (inputChar === expectedChar);
   recordKeyResult(expectedChar, isCorrect);
+  classifyKeystroke(expectedChar, inputChar, currentIndex, isCorrect);
 
   // rhythm/latency tracking between consecutive CLEAN keystrokes
   const now = Date.now();
@@ -947,12 +1094,13 @@ function handleKeydown(e){
   lastKeyTime = now; lastExpectedChar = expectedChar; lastKeystrokeWasCorrect = isCorrect;
 
   if(isCorrect){ letters[currentIndex].className='letter correct'; correctKeystrokes++; playSound('correct'); }
-  else{ letters[currentIndex].className='letter incorrect'; errorCount++; playSound('incorrect'); classifyError(expectedChar, inputChar, currentIndex); }
+  else{ letters[currentIndex].className='letter incorrect'; errorCount++; playSound('incorrect'); }
 
   currentIndex++; updateCaretPosition(); updateStatsDisplay(); updateCarriage(); updateFingerGuide();
 
   if(currentIndex === letters.length){
-    if(currentStage < stages.length - 1){ currentStage++; loadStage(); }
+    if(timedLimit()){ loadStage(); }   // timed challenge: the clock ends it, so finishing the text just brings more
+    else if(currentStage < stages.length - 1){ currentStage++; loadStage(); }
     else{ finishLesson(); }
   }
 }
@@ -962,20 +1110,35 @@ document.addEventListener('keydown', handleKeydown);
    5. AUDIO FEEDBACK
    ========================================================================== */
 let audioCtx=null;
+const SOUND_KEY='typingMasterSound';
+const SOUND_LEVELS=[
+  {label:'sound', gain:1,    waves:'<path d="M10.2 5.6a3.3 3.3 0 0 1 0 4.8M12.1 3.7a6 6 0 0 1 0 8.6"/>'},
+  {label:'quiet', gain:0.35, waves:'<path d="M10.2 5.6a3.3 3.3 0 0 1 0 4.8"/>'},
+  {label:'muted', gain:0,    waves:'<path d="M10.5 6l3.5 4M14 6l-3.5 4"/>'}
+];
+let soundLevel = 0;
+function applySoundLevel(i){
+  soundLevel = (i>=0 && i<SOUND_LEVELS.length) ? i : 0;
+  const lv = SOUND_LEVELS[soundLevel];
+  document.getElementById('soundToggle').innerHTML = `<svg class="nb-svg" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h2.4L7.6 3.2v9.6L4.4 10H2z"/>${lv.waves}</svg>${lv.label}`;
+  try{ localStorage.setItem(SOUND_KEY, String(soundLevel)); }catch(e){}
+}
+function volume(){ return SOUND_LEVELS[soundLevel].gain; }
 function initAudioContext(){ if(audioCtx) return; const Ctx=window.AudioContext||window.webkitAudioContext; if(Ctx) audioCtx=new Ctx(); }
 document.addEventListener('keydown', initAudioContext, {once:true});
 function playSound(type){
-  if(!audioCtx) return;
+  const vol = volume();
+  if(!audioCtx || vol===0) return;
   const now = audioCtx.currentTime;
   const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
   osc.connect(gain); gain.connect(audioCtx.destination);
   if(type==='correct'){
     osc.type='square'; osc.frequency.setValueAtTime(1250, now);
-    gain.gain.setValueAtTime(0.06, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.05);
+    gain.gain.setValueAtTime(0.06*vol, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.05);
     osc.start(now); osc.stop(now+0.06);
   } else {
     osc.type='sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(70, now+0.15);
-    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.18);
+    gain.gain.setValueAtTime(0.1*vol, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.18);
     osc.start(now); osc.stop(now+0.2);
   }
 }
@@ -986,7 +1149,16 @@ function playSound(type){
 const STREAK_KEY='typingMasterStreak', PROGRESS_KEY='typingMasterProgress';
 let progress = {};
 function todayString(){ const d=new Date(); d.setHours(0,0,0,0); return d.toISOString().slice(0,10); }
-function loadStreak(){ try{ const data=JSON.parse(localStorage.getItem(STREAK_KEY)||'null'); document.getElementById('streakCount').textContent = data?data.count:0; }catch(e){} }
+function loadStreak(){
+  let data = null;
+  try{ data = JSON.parse(localStorage.getItem(STREAK_KEY)||'null'); }catch(e){}
+  // more than one day since the last practice means the streak is already broken
+  if(data && data.lastDate && data.count > 0){
+    const diff = Math.round((new Date(todayString())-new Date(data.lastDate))/86400000);
+    if(diff > 1){ data.count = 0; try{ localStorage.setItem(STREAK_KEY, JSON.stringify(data)); }catch(e){} }
+  }
+  document.getElementById('streakCount').textContent = data ? data.count : 0;
+}
 function recordStreak(){
   const today = todayString(); let data;
   try{ data = JSON.parse(localStorage.getItem(STREAK_KEY) || 'null'); }catch(e){ data=null; }
@@ -1056,7 +1228,8 @@ function renderReviewPanel(){
 function getExtremeBigram(wantSlow){
   let best = null;
   Object.entries(bigramLatency).forEach(([pair, d]) => {
-    if(d.count < 3) return;
+    if(d.count < 3 || pair.length !== 3 || /\s/.test(pair[0]+pair[2])) return; // "a>b"; transitions into or out of a space are skipped
+
     const avg = d.totalMs / d.count;
     if(!best || (wantSlow ? avg > best.avg : avg < best.avg)) best = {pair, avg, count:d.count};
   });
@@ -1078,10 +1251,10 @@ function generateBotMessage(){
   const dom = dominantErrorCategory();
   const parts = [];
   if(slow && fast && slow.pair !== fast.pair){
-    const [sa,sb] = slow.pair.split('>'); const [fa,fb] = fast.pair.split('>');
+    const sa = slow.pair[0], sb = slow.pair[2], fa = fast.pair[0], fb = fast.pair[2];
     parts.push(`You type '${fa}' to '${fb}' quickly, but your rhythm stumbles moving from '${sa}' to '${sb}'.`);
   } else if(slow){
-    const [sa,sb] = slow.pair.split('>');
+    const sa = slow.pair[0], sb = slow.pair[2];
     parts.push(`Your rhythm stumbles moving from '${sa}' to '${sb}'.`);
   }
   if(dom){
@@ -1095,8 +1268,8 @@ function generateBotMessage(){
 function buildSmartPracticeLesson(){
   const slow = getExtremeBigram(true);
   const problemKeys = computeProblemKeys();
-  const targetChars = problemKeys.length ? problemKeys.map(p=>p.char) : (slow ? slow.pair.split('>') : ['a','s']);
-  const targetPair = slow ? slow.pair.replace('>','') : targetChars.slice(0,2).join('');
+  const targetChars = problemKeys.length ? problemKeys.map(p=>p.char) : (slow ? [slow.pair[0], slow.pair[2]] : ['a','s']);
+  const targetPair = slow ? slow.pair[0]+slow.pair[2] : targetChars.slice(0,2).join('');
 
   const allWords = new Set();
   lessons.forEach(l => { if(Array.isArray(l.wordDrill)) l.wordDrill.forEach(w=>allWords.add(w)); });
@@ -1113,12 +1286,16 @@ function buildSmartPracticeLesson(){
     fragTokens.push(frag);
   }
 
-  const errCount = Object.values(errorClasses).reduce((a,b)=>a+b,0);
+  // say what the drill is actually built from
+  const reasons = [];
+  if(problemKeys.length) reasons.push(`your least accurate keys (${problemKeys.slice(0,3).map(p => `${p.char} ${Math.round((1-p.rate)*100)}%`).join(', ')})`);
+  if(slow) reasons.push(`your slowest key transition, '${slow.pair[0]}' to '${slow.pair[2]}' (about ${Math.round(slow.avg)} ms)`);
+  const intro = reasons.length ? `A custom drill built from ${reasons.join(' and ')}.` : 'A general precision drill on the home row.';
   return {
     id:'smart', tier:'Coach — Smart Practice', isReview:true,
     keys: targetChars.map(c => c===' ' ? 'space' : c),
     title:'Smart Practice Drill',
-    botIntro: `I noticed ${errCount} errors concentrated around '${targetPair}' clustering. Here's a custom precision drill to smooth it out.`,
+    botIntro: intro,
     charDrill: fragTokens.join(' '),
     wordDrill: matched.slice(0,12),
     paragraphDrill: ''
@@ -1227,7 +1404,7 @@ function renderDashboard(){
       const p = progress[l.id]; const stars = p?p.stars:0;
       const card = document.createElement('div'); card.className='lesson-card';
       card.style.setProperty('--tier-accent', accent);
-      const best = p && p.bestWpm ? `${p.bestWpm} wpm` : l.id.toUpperCase();
+      const best = p && p.bestWpm ? `${p.bestWpm} wpm` : 'L'+lessonNumber(l);
       card.innerHTML = `<div class="lnum">${best}</div><div class="ltitle">${l.title}</div><div class="lstars">${dotGlyphs(stars)}</div>`;
       card.addEventListener('click', () => openLesson(l.id));
       grid.appendChild(card);
@@ -1260,7 +1437,7 @@ function backToDashboard(){
   document.getElementById('towResultsOverlay').classList.add('hidden');
   siStop(); metStop(); towStop();
   homeView.style.display='flex';
-  clearInterval(sampleIntervalHandle);
+  stopTimers();
   saveKeyStats();
   renderHome();
 }
@@ -1275,9 +1452,9 @@ function openFunMode(){
   document.getElementById('funSelectView').style.display='flex';
 }
 function resetLessonState(){
-  clearInterval(sampleIntervalHandle);
+  stopTimers(); pendingSkip = null; lastKeyTime = null; lastExpectedChar = null; lastKeystrokeWasCorrect = true;
   currentIndex=0; totalKeystrokes=0; correctKeystrokes=0; errorCount=0; startTime=null; wpmSamples=[]; lessonFinished=false;
-  updateStatsDisplay(); paper.style.opacity='1'; startHint.style.display='flex'; paper.classList.remove('focused');
+  updateStatsDisplay(); updateClock(); paper.style.opacity='1'; startHint.style.display='flex'; paper.classList.remove('focused');
   typer.value='';
 }
 function resetLesson(){
@@ -1289,9 +1466,11 @@ function resetLesson(){
 }
 
 function finishLesson(){
-  lessonFinished = true; clearInterval(sampleIntervalHandle);
+  lessonFinished = true; stopTimers(); flushPendingSkip();
   const finalWpm = currentWpm(); const finalAcc = currentAccuracy();
-  const elapsedSec = startTime ? Math.round((Date.now()-startTime)/1000) : 0;
+  const limit = timedLimit();
+  const elapsedSec = startTime ? Math.round(limit ? Math.min(limit, elapsedSeconds()) : elapsedSeconds()) : 0;
+  updateClock();
   wpmSamples.push({t: elapsedSec, wpm: finalWpm});
 
   let stars = 0;
@@ -1422,6 +1601,7 @@ function siHandleChar(ch){
 }
 document.addEventListener('keydown', (e) => {
   if(document.getElementById('spaceInvadersView').style.display === 'none') return;
+  if(typingElsewhere(e) || isShortcut(e)) return;
   if(e.key === ' ') e.preventDefault();
   if(e.key.length === 1){ e.preventDefault(); siHandleChar(e.key.toLowerCase()); }
 });
@@ -1444,12 +1624,13 @@ const MET = { bpm:80, beatMs:750, running:false, beatTimes:[], score:0, combo:0,
 const TOLERANCE_MS = 160; // how close to a beat counts as "on time"
 
 function metPlayClick(){
-  if(!audioCtx) return;
+  const vol = volume();
+  if(!audioCtx || vol===0) return;
   const now = audioCtx.currentTime;
   const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
   osc.connect(gain); gain.connect(audioCtx.destination);
   osc.type='sine'; osc.frequency.setValueAtTime(880, now);
-  gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.08);
+  gain.gain.setValueAtTime(0.08*vol, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.08);
   osc.start(now); osc.stop(now+0.08);
 }
 function metBeatPulse(){
@@ -1510,7 +1691,7 @@ function metClosestBeatDelta(now){
   return best;
 }
 function metHandleKey(e){
-  if(!MET.running) return;
+  if(!MET.running || isShortcut(e)) return;
   if(e.key===' ') e.preventDefault();
   if(e.key.length!==1) return;
   if(MET.index>=MET.letters.length) return;
@@ -1553,7 +1734,9 @@ document.getElementById('metroPaper').addEventListener('click', () => document.g
 document.getElementById('metroTyper').addEventListener('keydown', metHandleKey);
 document.addEventListener('keydown', (e) => {
   if(document.getElementById('metronomeView').style.display==='none') return;
-  if(document.activeElement!==document.getElementById('metroTyper') && e.key.length===1){ document.getElementById('metroTyper').focus(); }
+  if(typingElsewhere(e) || isShortcut(e)) return;
+  // not focused yet: take focus and count this key too, instead of swallowing it
+  if(document.activeElement!==document.getElementById('metroTyper') && e.key.length===1){ document.getElementById('metroTyper').focus(); metHandleKey(e); }
 });
 document.getElementById('playMetroBtn').addEventListener('click', () => {
   document.getElementById('funSelectView').style.display='none';
@@ -1620,7 +1803,7 @@ function towLoop(){
   TOW.animHandle = requestAnimationFrame(towLoop);
 }
 function towHandleKey(e){
-  if(!TOW.running || TOW.finished) return;
+  if(!TOW.running || TOW.finished || isShortcut(e)) return;
   if(e.key===' ') e.preventDefault();
   if(e.key.length!==1) return;
   if(TOW.index>=TOW.letters.length) return;
@@ -1650,7 +1833,8 @@ document.getElementById('towPaper').addEventListener('click', () => document.get
 document.getElementById('towTyper').addEventListener('keydown', towHandleKey);
 document.addEventListener('keydown', (e) => {
   if(document.getElementById('tugOfWarView').style.display==='none') return;
-  if(document.activeElement!==document.getElementById('towTyper') && e.key.length===1){ document.getElementById('towTyper').focus(); }
+  if(typingElsewhere(e) || isShortcut(e)) return;
+  if(document.activeElement!==document.getElementById('towTyper') && e.key.length===1){ document.getElementById('towTyper').focus(); towHandleKey(e); }
 });
 document.getElementById('playTowBtn').addEventListener('click', () => {
   document.getElementById('funSelectView').style.display='none';
@@ -1726,6 +1910,7 @@ function applyTheme(theme){
   paletteCache = null; // canvas colours are sampled from CSS variables
   try{ localStorage.setItem(THEME_KEY, theme); }catch(e){}
 }
+document.getElementById('soundToggle').addEventListener('click', () => applySoundLevel((soundLevel+1) % SOUND_LEVELS.length));
 themeToggle.addEventListener('click', () => { const c=document.documentElement.getAttribute('data-theme'); applyTheme(c==='dark'?'light':'dark'); });
 window.addEventListener('beforeunload', saveKeyStats);
 
@@ -1733,6 +1918,8 @@ window.addEventListener('beforeunload', saveKeyStats);
 (function init(){
   let savedTheme='dark'; try{ savedTheme = localStorage.getItem(THEME_KEY)||'dark'; }catch(e){}
   applyTheme(savedTheme);
+  let savedSound = 0; try{ savedSound = parseInt(localStorage.getItem(SOUND_KEY)||'0', 10) || 0; }catch(e){}
+  applySoundLevel(savedSound);
   loadProgress(); loadStreak(); loadKeyStats(); loadAnalytics();
   homeView.style.display='flex'; lessonView.style.display='none';
   document.getElementById('funSelectView').style.display='none';
