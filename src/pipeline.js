@@ -273,6 +273,8 @@ export async function ensureUser(env, userId) {
 }
 
 /* ---------------- one batch of events ---------------- */
+// another batch for the same learner got there first: wait a little (with jitter) and start again
+const backoff = (attempt) => new Promise((r) => setTimeout(r, Math.random() * 15 * 2 ** Math.min(attempt, 5)));
 const retryable = (e) => /pipeline_guard|UNIQUE constraint failed: events|UNIQUE constraint failed: user_totals/i.test(String(e && e.message));
 
 export async function countRejects(env, userId, codes, now = nowIso()) {
@@ -364,7 +366,7 @@ export async function processEvents(env, userId, raw, { legacy = false, internal
   const awarded = { xp: 0, badges: [], quests: [], certificates: [], unlocks: [], rankUp: null };
   if (!valid.length && !extra) return { accepted: [], duplicates, rejected, awarded };
 
-  for (let attempt = 0; attempt < 6; attempt++) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     const have = new Set((await DB.prepare('SELECT id FROM events WHERE user_id = ?1 AND id IN (SELECT value FROM json_each(?2))')
       .bind(userId, JSON.stringify(valid.map((e) => e.id))).all()).results.map((r) => r.id));
     const fresh = valid.filter((e) => !have.has(e.id)).map((e) => ({ ...e, data: { ...e.data } }));
@@ -407,6 +409,7 @@ export async function processEvents(env, userId, raw, { legacy = false, internal
       return { accepted: fresh.map((e) => e.id), duplicates: dups, rejected, awarded: got };
     } catch (err) {
       if (!retryable(err)) throw err;
+      await backoff(attempt);
     }
   }
   await countRejects(env, userId, ['busy'], now);
