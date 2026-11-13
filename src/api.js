@@ -33,6 +33,9 @@ export async function buildState(env, userId, today) {
   const s = rowsToState(stored);
 
   const lessons = {};
+  for (const id of META.ORDER) {
+    lessons[id] = { status: 'not_started', step: 0, stars: 0, crown: false, bestWpm: 0, bestAccuracy: 0, attempts: 0, lastPlayed: null, lastWpm: null, lastAccuracy: null, completedAt: null };
+  }
   for (const [id, L] of Object.entries(s.lessons)) {
     lessons[id] = { status: L.status, step: L.step, stars: L.stars, crown: !!L.crown, bestWpm: L.bestWpm, bestAccuracy: L.bestAccuracy,
       attempts: L.attempts, lastPlayed: L.lastPlayed, lastWpm: L.lastWpm, lastAccuracy: L.lastAccuracy, completedAt: L.completedAt };
@@ -268,7 +271,7 @@ export async function importCore(env, userId, body, today) {
   const stats = {};
   for (const k of ['keyStats', 'bigramLatency', 'errorClasses']) if (st[k] && typeof st[k] === 'object' && Object.keys(st[k]).length) stats[k] = st[k];
   if (Object.keys(stats).length) { try { await saveStats(env, userId, `${importId}:stats`, stats); } catch { /* bad stats never block the progress */ } }
-  return { imported: true, lessons, rejected };
+  return { imported: true, lessonsImported: lessons, rejected };
 }
 
 export async function postImport(request, env) {
