@@ -12,17 +12,16 @@
     "run_worker_first": ["/api/*"]
   },
 
-  // ACCOUNTS DATABASE (SETUP.md, step 2): once the D1 database "typecraft" exists,
-  // remove the two slashes in front of each of the 8 lines below and paste its ID.
-  // Until then the site works exactly as before, without accounts.
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "typecraft",
-  //     "database_id": "PASTE_YOUR_D1_DATABASE_ID_HERE",
-  //     "migrations_dir": "migrations"
-  //   }
-  // ],
+  // ACCOUNTS DATABASE (SETUP.md, step 2): the D1 database "typecraft".
+  // Its tables are created by migrations/0001_accounts.sql (SETUP.md, step 1).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "typecraft",
+      "database_id": "9df6b720-1fbc-4022-b547-fdf86bd59a28",
+      "migrations_dir": "migrations"
+    }
+  ],
 
   // Email settings (RESEND_API_KEY, EMAIL_FROM, optional APP_URL) are set as
   // secrets in the Cloudflare dashboard, never in this file. keep_vars stops a
