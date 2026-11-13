@@ -209,7 +209,9 @@
     sh.showStart();
     loop.start();
     return {
-      destroy: function(){ offKeys(); loop.destroy(); scr.destroy(); S = null; sh.destroy(); }
+      destroy: function(){ offKeys(); loop.destroy(); scr.destroy(); S = null; sh.destroy(); },
+      /* test hook: words on screen */
+      _words: function(){ return S ? S.ships.map(function(s){ return s.word; }) : []; }
     };
   }
 

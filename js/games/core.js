@@ -371,6 +371,7 @@
           (how ? '<ul class="tcg-how">' + how + '</ul>' : '') +
           (extraHtml || '') + optionsHtml() +
           '<div class="tcg-actions"><button type="button" class="tcg-btn" data-act="go">Start</button>' +
+          '<button type="button" class="tcg-btn ghost" data-act="back">Back</button>' +
           (sessionBest != null ? '<span class="tcg-best">Best <b>' + sessionBest + '</b></span>' : '') + '</div>' +
           '<p class="tcg-tip">Press Enter to start</p>'
         );

@@ -211,7 +211,10 @@ h1{margin:0;font:560 clamp(30px,5vw,48px)/1.08 var(--display);letter-spacing:-.0
       ctx.onEnd = function(r){ onEnd(r); if(r.counted){ var h = store('tcDevDaily') || []; h.push({ date: r.date, wpm: r.stats.wpm, accuracy: r.stats.accuracy }); store('tcDevDaily', h); } };
       handle = G.daily.mount(play, ctx);
     } else {
-      handle = G.get(id).mount(play, makeCtx(id));
+      var gctx = makeCtx(id);
+      if(id === 'boss' && params.get('lesson')) gctx.bossLesson = BOSSES[0]; /* course mode, as a boss lesson mounts it */
+      handle = G.get(id).mount(play, gctx);
+      window.__game = handle;
     }
     window.scrollTo(0, 0);
   }
