@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-bg="letters" data-fx="full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TypeCraft · typewriter dev harness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/next.css">
+<link rel="stylesheet" href="css/typewriter.css">
+<style>
+  .dev{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left)) 72px;display:flex;flex-direction:column;gap:18px}
+  .dev h1{margin:0;font:560 clamp(28px,4vw,44px)/1.1 var(--display);color:var(--text)}
+  .dev h2{margin:22px 0 0;font:560 22px/1.2 var(--display);color:var(--text)}
+  .dev p{margin:0;color:var(--muted);font-size:14px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+  .controls label{display:flex;gap:8px;align-items:center;font:500 12.5px/1 var(--mono);color:var(--muted)}
+  .controls select{background:var(--surface);color:var(--text);border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px}
+</style>
+</head>
+<body>
+<main class="dev">
+  <h1>Typewriter dev harness</h1>
+  <p>Stand-alone test page for <code>js/typewriter.js</code>. The demo machine takes keys only while it has focus; everywhere else keys go to the lesson machine.</p>
+  <div class="controls">
+    <label>Theme <select id="theme">
+      <option value="letters">Floating letters</option><option value="aurora">Aurora</option><option value="neon">Neon grid</option>
+      <option value="space">Deep space</option><option value="sunset">Sunset</option><option value="ocean">Ocean</option>
+      <option value="gold">Black and gold</option><option value="paper">Paper</option></select></label>
+    <label>Effects <select id="fx"><option>full</option><option>light</option><option>off</option></select></label>
+    <label>Keycaps <select id="skin"><option value="ink">Standard issue</option><option value="ivory">Ivory and brass</option>
+      <option value="signal">Signal red</option><option value="blueprint">Blueprint</option></select></label>
+    <label><input type="checkbox" id="guide" checked> Finger guide</label>
+    <button type="button" class="btn secondary" id="restart">Restart lesson (Tab)</button>
+  </div>
+
+  <h2>Home: demo</h2>
+  <div id="demoHost"></div>
+
+  <h2>Lesson</h2>
+  <div id="lessonHost"></div>
+</main>
+<script src="js/typewriter.js"></script>
+<script>
+(function(){
+  'use strict';
+  var root = document.documentElement;
+  var demo = TC_TYPEWRITER.create(document.getElementById('demoHost'), {demo:true, demoKeys:'focus'});
+  var lesson = TC_TYPEWRITER.create(document.getElementById('lessonHost'), {
+    meta:{left:'Level 3 · All 26 letters', right:'Step 4 of 5 · Sentences'},
+    sound:function(name){ window.__sounds = (window.__sounds || 0) + 1; }
+  });
+  window.__tw = {demo:demo, lesson:lesson};
+
+  var TEXT = 'The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs, then type a few more words: ' +
+    'zebras, wizards and quartz! How vexingly quick daft zebras jump; the five boxing wizards jump quickly.';
+  var idx, errs, ok, t0, wrongHere, timer;
+  function start(){
+    idx = 0; errs = 0; ok = 0; t0 = 0; wrongHere = false;
+    lesson.setText(TEXT); lesson.setPosition(0);
+    lesson.readings({wpm:0, accuracy:100, seconds:0, errors:0});
+    lesson.setHint('Type the line. Tab restarts.');
+  }
+  function stats(){
+    var s = t0 ? (performance.now() - t0) / 1000 : 0, tot = ok + errs;
+    lesson.readings({wpm:s > 1 ? ok / 5 / (s / 60) : 0, accuracy:tot ? ok / tot * 100 : 100, seconds:s, errors:errs});
+  }
+  clearInterval(timer); timer = setInterval(function(){ if(t0 && idx < TEXT.length) stats(); }, 1000);
+  document.addEventListener('keydown', function(e){
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    if(demo.machineEl.contains(document.activeElement)) return;
+    var t = e.target;
+    if(t && t.closest && t.closest('select,input')) return;
+    if(e.key === 'Tab'){ e.preventDefault(); start(); return; }
+    if((e.key === ' ' || e.key === 'Enter') && t && t.closest && t.closest('button')) return;
+    if(e.key.length !== 1 || idx >= TEXT.length) return;
+    e.preventDefault();
+    if(!t0) t0 = performance.now();
+    var good = e.key === TEXT.charAt(idx);
+    lesson.pressKey(e.key, good);
+    if(good){ ok++; idx++; } else errs++;
+    lesson.setPosition(idx, {wrong:!good});   // also lights the next key (autoNext)
+    stats();
+    if(idx >= TEXT.length) lesson.setHint('Done. Tab to go again.');
+  });
+  document.getElementById('restart').addEventListener('click', start);
+  document.getElementById('theme').addEventListener('change', function(e){ root.setAttribute('data-bg', e.target.value); });
+  document.getElementById('fx').addEventListener('change', function(e){ root.setAttribute('data-fx', e.target.value); });
+  document.getElementById('skin').addEventListener('change', function(e){ demo.setSkin(e.target.value); lesson.setSkin(e.target.value); });
+  document.getElementById('guide').addEventListener('change', function(e){ demo.setGuide(e.target.checked); lesson.setGuide(e.target.checked); });
+  start();
+})();
+</script>
+</body>
+</html>
