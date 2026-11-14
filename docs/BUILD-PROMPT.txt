@@ -1,0 +1,549 @@
+TYPECRAFT, NEXT VERSION: BUILD PROMPT
+=====================================
+
+You are upgrading TypeCraft, a typing tutor with an arcade, to its next version.
+Read this whole prompt before you start.
+
+REFERENCES
+----------
+- Live site today: https://typecraft01.mayankbhadauria08.workers.dev/
+- Approved design: the file design-preview.html in the same folder as this prompt.
+  Open it in a browser, try it (type on the machine, switch the themes, hover the
+  cards) and read its source. It is the source of truth for the LOOK: colours,
+  fonts, glass panels, glow, the 3D typewriter, the 3D keyboard, the background
+  themes, cards and buttons. Reuse its CSS and JavaScript wherever that helps.
+  It is a mock-up of one page, so design the screens it does not show in the
+  same style.
+- This prompt is the source of truth for FEATURES, RULES and ORDER OF WORK.
+
+BEFORE YOU WRITE CODE
+---------------------
+1. Check the folder you are in. If it holds the TypeCraft code (one index.html of
+   about 2,850 lines with inline CSS and JavaScript, served by a Cloudflare
+   Worker with /api routes), upgrade that code in place. If it does not, stop and
+   ask me where the code is. If I answer that there is none, download the live
+   page as your starting point and build the server new, as described under
+   DATA, DATABASE AND APIS.
+2. Read the existing code end to end: the lessons array and computeAllowedKeys,
+   the text generators, the stage engine, key statistics and error classes, the
+   coach and review panels, the three fun-mode games, sound, streak, progress,
+   and the account and sync code.
+3. If design-preview.html is missing, ask me for it.
+4. Tell me in a few lines what you found and your plan. Then build in the phases
+   at the end. After each phase run the app, check it in a browser at 1440, 768
+   and 400 px wide, and show me a screenshot before going on.
+5. Do not deploy, publish, or change any live data. I deploy after I approve.
+
+WHAT MUST NOT BREAK
+-------------------
+- Lesson ids l1 to l24 are permanent. Saved progress is keyed by them. Keep every
+  one with its meaning. New lessons get new ids, l25 onward, in the order listed
+  below. The number a learner sees is the position in the course, never the id.
+- A lesson may only use characters taught by itself or an earlier lesson (the
+  teach field and the cumulative allowed set; capitals only from the first Shift
+  lesson). Keep this rule for all 78 lessons. Add a development check that
+  generates every step of every lesson 50 times and reports any character
+  outside the allowed set.
+- Browser storage keys starting with typingMaster keep their names and shapes
+  (Progress, Streak, KeyStats, BigramLatency, ErrorClasses, Position, Sound,
+  Feedback, AccountCache). Old saved data must load without loss. Put new data
+  under new typingMaster keys.
+- Accounts keep working exactly as today: sign up, sign in, forgot and reset
+  password, profile, change email, change password, sign out everywhere, delete
+  account, adding guest progress to an account, and the sync queue. Restyle these
+  screens. You do extend the server so that everything is saved in the database
+  (see DATA, DATABASE AND APIS), but existing accounts, sign-ins and saved
+  progress must keep working through the change.
+- Typing must feel instant. Key handling stays synchronous and light. No effect
+  may delay a keystroke or move the text while someone is typing.
+- The app works without an account, is free, has no ads and sells nothing.
+- English on a standard QWERTY keyboard only.
+- Star rule stays: 1 star at 80% accuracy, 2 at 92%, 3 at 98%.
+- The feedback form, the coach panel, the problem-keys review drill and the
+  "pick up where you left off" panel stay, restyled.
+
+HOW TO BUILD IT
+---------------
+- No framework and no 3D engine. Plain HTML, CSS and JavaScript. 3D with CSS
+  transforms, effects with SVG and canvas, sound made with the Web Audio API (no
+  audio files), as the preview does.
+- Keep the way the project is served. You may split the one big file into
+  separate CSS and JavaScript files if the Worker can serve them. Do not add a
+  build step unless one already exists.
+- No images from other sites. Fonts from Google Fonts: Fraunces (headings),
+  IBM Plex Sans (text), IBM Plex Mono (typing text and numbers).
+- Budget: first load under 350 KB compressed, not counting fonts. 60 frames a
+  second on an ordinary laptop.
+
+DATA, DATABASE AND APIS (build this fully)
+------------------------------------------
+Goal: nothing a learner does is ever lost, and no number is ever different in
+two places. Example: someone stops in the middle of lesson 3. On any device,
+after signing in, Continue opens lesson 3 at the same step, and that lesson's
+scorecard shows the same stars, best speed, accuracy and attempts.
+
+Start by reading the server code that is already there (the Worker, its routes
+and its database tables) and tell me what it stores today. Then extend it. If
+the server code is not in the folder, ask me for it. If I say there is none,
+build the whole server new on Cloudflare Workers with a D1 database, including
+sign-up and sign-in, and tell me that existing accounts will have to be moved.
+
+One rule decides every number: for a signed-in learner the database is the
+truth. The browser keeps a copy for speed and for working offline. Totals
+(stars, best speed, XP, rank, streak, badges) are worked out on the server from
+the saved events, never taken from the browser's own totals.
+
+What goes in the database, every row tied to the user:
+ 1. Runs. Every finished step, lesson, test, boss fight and game run: an event
+    id made in the browser, the lesson or game id, the step, speed, accuracy,
+    errors, seconds, stars, crown, XP given, device time, server time.
+ 2. Lesson progress. Per lesson: status (not started, in progress, completed),
+    current step, stars, crown, best speed, best accuracy, attempts, last
+    played.
+ 3. Position. The lesson and step the learner is on right now, saved when a
+    lesson is opened and after every step.
+ 4. Typing statistics. Hits and misses per key, timing per key pair, and
+    mistake types (today's KeyStats, BigramLatency and ErrorClasses), sent in
+    small batches.
+ 5. Daily totals. Per day: minutes practised, runs, best speed, average
+    accuracy, XP, quests done. This feeds the calendar, the charts and the
+    streak.
+ 6. The XP ledger and rank, the streak with freezes used, daily quests and
+    their state.
+ 7. Badges earned with their dates, certificates issued, the placement result.
+ 8. Workshop: what is unlocked and what is in use (keycaps, ink, paper, sound),
+    and settings (theme, effects, sound level, daily goal, finger guide).
+ 9. Game bests per game, ghost replays (best-run timings, capped in size),
+    Daily Challenge results.
+10. Feedback entries (today they stay in the browser; send them to the server
+    too).
+
+APIs. All under /api, for the signed-in user only, JSON, using today's sign-in
+session:
+- GET  /api/user/state         Everything the app needs at start in one call:
+                               progress for every lesson, position, totals, XP
+                               and rank, streak, quests, badges, unlocks,
+                               settings, game bests.
+- POST /api/user/events        A batch of events (run finished, step finished,
+                               quest progress). Each has a unique id. The
+                               server ignores an id it has already saved and
+                               answers with the fresh totals.
+- PUT  /api/user/position      The lesson and step just opened or finished.
+- POST /api/user/stats         A batch of typing statistics.
+- PUT  /api/user/settings      Settings and what is in use from the Workshop.
+- GET  /api/user/lessons/:id   That lesson's scorecard: best, last, attempts,
+                               stars, crown, and every run with its date, speed
+                               and accuracy.
+- GET  /api/user/history       Daily totals for the calendar and charts.
+- POST /api/user/import        Adds a guest's browser progress to the account
+                               (today's "Add your earlier progress?" step),
+                               keeping the better result for each lesson and
+                               never counting a run twice.
+- GET  /api/user/export        The learner's whole data as a file.
+- Deleting the account removes every row listed above.
+Keep today's routes working until the new ones have fully replaced them.
+
+Rules that prevent a mismatch:
+- Every write is an event with an id made in the browser. Sending it twice
+  changes nothing.
+- Counters are updated in one database statement, never read first and written
+  back afterwards.
+- The server checks every number (speed 0 to 400, accuracy 0 to 100, sensible
+  seconds, a lesson id that exists) and refuses anything else.
+- Offline: events wait in the browser's queue (today's sync queue) and are sent
+  in order when the connection returns. Until then the screen says "Saved on
+  this device, will sync".
+- After every sync the browser replaces its totals with the server's answer.
+- Two devices at once: events from both are kept, the best result per lesson
+  wins, and the position is the most recent one by server time.
+- A guest's data stays in the browser in the same shape, so signing up loses
+  nothing.
+
+Pipelines:
+- On every event batch: save the events, then update lesson progress, daily
+  totals, XP, streak, quests and badges together, so they can never disagree.
+- A nightly job (a Cron Trigger) rebuilds every total from the saved events and
+  compares it with the stored total. It corrects any difference and records it.
+- An owner-only page with the health numbers: learners, active today, runs
+  today, events waiting or failed, and differences found by the nightly job.
+  That last number should be zero.
+
+Scorecard: every lesson card, the lesson screen and the Results screen show the
+same scorecard from the server: stars, crown, best speed, best accuracy,
+attempts, last played and the run history. The Continue button reads the saved
+position.
+
+Safety: change the database only through numbered migration files. Run them on
+a local or test database. Do not run a migration on the live database and do not
+deploy: give me the commands and I run them after I approve. Never print
+passwords, tokens or other secrets.
+
+LOOK AND FEEL (match design-preview.html)
+-----------------------------------------
+Brand: the "typecraft" wordmark with "craft" in italic accent colour, and the
+keycap logo with a T.
+
+Default theme: "Floating letters". Near-black green background (#070b0a), a soft
+moving glow of teal, violet and amber behind the page, and about 44 letters
+drifting slowly upward on a canvas behind the content at low opacity. No grid
+floor in this theme. Base colours: panels #101716 and #172120, text #ece7d9,
+muted text #96a39e, accent teal #5fd6c0 (deep #2e9a89), second accent violet
+#a594ff, reward colour brass #e2b65f, error red #ff7b6e. Machine body enamel
+green #17322e (highlight #27544d, shadow #0a1715). Paper sheet cream #f6f0e1
+with ink #26221b.
+
+Other themes, all free and one click away in Settings and on the home screen:
+Aurora, Neon grid, Deep space, Sunset, Ocean, Black and gold (dark themes, each
+with its own accent, glow, machine colour and key colour, exactly as in the
+preview) and Paper (the light theme). The choice is saved for the learner.
+
+Materials used on every screen:
+- Glass panels: translucent gradient fill, 1 px light border, soft inner
+  highlight, background blur.
+- Glow: accent-coloured glow under the machine, on the next key, on level
+  markers and on card edges.
+- Large gradient headlines in Fraunces.
+- Buttons shaped like keycaps that press down when clicked.
+- Floating 3D keycaps drifting beside the home headline.
+- Cards that tilt toward the pointer with a moving highlight.
+
+The 3D typewriter is the centrepiece of the home screen and of every lesson:
+- A cream paper sheet leaning back, with paper grain. It shows three lines: the
+  line just typed, the live line, the next line. When a line is finished the
+  paper feeds up one line.
+- Ink: a freshly typed letter looks wet for half a second, then dries with a
+  slightly rough typewriter edge (SVG turbulence and displacement filter).
+- A black roller under the paper, and a scale with a brass marker that moves
+  with progress along the line and slides back at the end of the line with a
+  soft bell.
+- A 3D keyboard: every key is a dark base with a raised top. The next key rises
+  and glows. A pressed key travels down. A wrong key flashes red. F and J have
+  bumps. The whole deck tilts a little with the pointer.
+- A reach line: an animated dashed SVG curve from the resting finger's home key
+  to the next key, with the caption "Next key H, right index finger".
+- The machine floats gently, with a glow underneath and a slow sheen across it.
+- Live readings beside it: speed on a rolling mechanical counter, an SVG
+  accuracy ring, time, errors.
+
+Motion and comfort:
+- One Effects setting: Full, Light, Off. Light: no background animation, no
+  floating keycaps, no tilt; key travel and the next-key glow stay. Off: flat
+  keyboard, no filters, no animation except the caret.
+- If the device asks for reduced motion, start at Light.
+- Pause animations when the tab is hidden or the element is off screen.
+- Every screen works down to 360 px wide with no sideways scrolling.
+- On a phone: home, course map, progress, badges and settings work fully.
+  Typing screens say that a real keyboard is needed, and still work if one is
+  connected.
+- Visible keyboard focus everywhere. Errors are shown by more than colour.
+  Normal text meets AA contrast in every theme.
+
+SCREENS
+-------
+Top bar on every screen (glass): logo, Learn, Arcade, Progress, Workshop; on the
+right the streak, the rank with an XP bar, sound, theme, account.
+
+1. Home. Headline, the 3D typewriter typing a demo line until the visitor types,
+   a Continue button (today's "pick up where you left off" logic), tiles for
+   lessons done, stars, best speed and average accuracy, today's three quests,
+   the coach panel, the problem-keys panel, and the start of the course map.
+2. Course map. The five levels as one route. Each level is a glowing 3D keycap
+   marker on an SVG path that draws itself as the learner progresses. Opening a
+   level shows its lessons as cards with stars, crown and best speed. Bosses are
+   larger markers. Today's level filter stays. Nothing is locked: any lesson can
+   be opened, as today. The map marks the recommended next lesson.
+3. Lesson. The 3D typewriter, the lesson title and level, step dots ("Step 4 of
+   5"), the live readings, the finger caption, Restart (Tab still restarts) and
+   Back.
+4. Results. Stars pop in one by one, crown if earned, XP counting up, the speed
+   chart (today's chart, restyled with an area fill), new badges flipping over,
+   and buttons: Next lesson (Enter), Retry (Tab), Back to the map.
+5. Arcade. Eight game cards as in the preview, each with the learner's best
+   score, plus a Daily Challenge banner.
+6. Progress. Keyboard heatmap coloured by each key's accuracy (from KeyStats),
+   slowest key pairs (BigramLatency), mistake types (ErrorClasses), speed and
+   accuracy over time, a 12-week practice calendar, time practised, all badges,
+   certificates.
+7. Workshop. Keycap sets, ink colours, paper stocks, key sounds and background
+   themes, each shown live on a small machine.
+8. Settings. Theme, Effects, sound (on, low, off as today), daily goal, finger
+   guide on or off, and Reset progress, confirmed inside the page by typing
+   RESET.
+9. Account screens and sign-in windows: same behaviour, new look.
+
+THE COURSE: 78 LESSONS IN FIVE LEVELS
+-------------------------------------
+"[l7]" marks a lesson that exists today, with its permanent id. Everything else
+is new. Titles of today's lessons stay as they are.
+
+Level 1, Beginner: home row (16)
+ 1. Meet the keyboard. Not scored. Sitting position, the bumps on F and J,
+    thumbs on the space bar. The learner presses F, J and space to finish.
+ 2. Home Base [l1]
+ 3. Adding D & K [l2]
+ 4. Review: F J D K. No new keys.
+ 5. Adding S & L [l3]
+ 6. Adding A & ; [l4]
+ 7. Review: all eight home keys
+ 8. First words. Real words from a s d f j k l only: dad, sad, lad, ask, add,
+    all, fall, flask, salad, lass, alfalfa.
+ 9. Filling In G & H [l5]
+10. Left hand only. a s d f g: sad, dad, fad, gas, sag, add, saga.
+11. Right hand only. h j k l ; as key drills (no real words exist).
+12. Space bar rhythm. Short words at a steady beat.
+13. Home Row Fluency [l6]
+14. Home row sentences. Longer phrases joined with ; as today's paragraphs do.
+15. Speed burst: 30 seconds. Timed, on home row words.
+16. Boss: Home row
+
+Level 2, Intermediate: top row and numbers (18)
+ 1. Reaching for E & I [l7]
+ 2. Reaching for R & T [l8]
+ 3. Review: E I R T
+ 4. Reaching for W & O [l9]
+ 5. Reaching for U & P [l10]
+ 6. Review: W O U P
+ 7. Reaching for Y & Q [l11]
+ 8. Top row words
+ 9. Double letters. tree, pool, letter, hill, pass, puppy, sorry.
+10. Common pairs: th he er ou. Only pairs made of home and top row letters.
+11. Home and top row sentences
+12. Boss: Top row
+13. Number Row: 1-5 [l12]
+14. Number Row: 6-0 [l13]
+15. Review: all ten digits
+16. Numbers with words. 12 keys, 45 pots, 7 days.
+17. Number speed drill
+18. Boss: Numbers
+
+Level 3, Advanced: bottom row, capitals and symbols (20)
+ 1. Reaching for V & M [l14]
+ 2. Reaching for B & N [l18]
+ 3. Review: V M B N
+ 4. Reaching for C & , [l15]
+ 5. Reaching for X & . [l16]
+ 6. Reaching for Z & / [l17]
+ 7. Review: C X Z and , . /
+ 8. All 26 letters. Lower-case pangrams such as "the quick brown fox jumps over
+    the lazy dog".
+ 9. Boss: Bottom row
+10. Left Shift capitals. First lesson that allows Shift. Capitals of the
+    right-hand letters.
+11. Right Shift capitals. Capitals of the left-hand letters.
+12. Shift & Capitals [l19]
+13. Names and places
+14. Sentence marks. Teaches ? ! ' "
+15. Brackets and maths. Teaches ( ) - _ = +
+16. Web and money. Teaches @ # $ % & * :
+17. Punctuation & Symbols [l20]. Today it introduces all 17 symbols at once.
+    It now comes after lessons 14 to 16 and works as their mixed review.
+18. Dates, phone numbers, prices
+19. Emails and web addresses. Use example.com addresses only.
+20. Boss: Capitals and symbols
+
+Level 4, Mastery: speed and fluency (14)
+ 1. Common Words Sprint [l21]
+ 2. Top 100 words
+ 3. Top 300 words
+ 4. Word endings: ing, tion, ed, ly
+ 5. Tricky words: rhythm, necessary, separate, definitely, receive, through.
+ 6. Sentence Fluency [l22]
+ 7. Paragraph Practice [l23]
+ 8. Accuracy lock. One mistake sends the learner back to the start of the line.
+ 9. Speed bursts: 15 seconds. Five sprints, the best one counts.
+10. Quotes and proverbs. Proverbs and sentences you write. No copyrighted text.
+11. Timed Challenge, 1 minute [l24]
+12. 3-minute test
+13. 5-minute test
+14. Final boss: Master Typist
+
+Level 5, Pro tracks: optional, in any order (10)
+ 1. Numpad: 4 5 6 home
+ 2. Numpad: all digits
+ 3. Numpad: decimals and sums ( + - * / . Enter )
+    Accept the same characters from the main keyboard and say so on screen,
+    because many laptops have no number pad.
+ 4. Code: brackets and operators. Teaches { } [ ] < > | \ ` ~ ^
+ 5. Code: HTML and CSS lines
+ 6. Code: JavaScript and Python lines. Short lines you write yourself.
+ 7. Office: emails and letters
+ 8. Office: names, addresses, amounts
+ 9. Exam practice: 10-minute passage
+10. Exam practice: strict rules. Ten minutes, no pause. Shows gross speed, net
+    speed (gross minus one word per minute for each uncorrected error per
+    minute), accuracy, and key depressions per hour.
+
+Totals: 16 + 18 + 20 + 14 + 10 = 78. Today's 24 plus 54 new, 6 of them bosses.
+
+Write real drill content for every new lesson in the same shape as today's
+lessons (charDrill, wordDrill, paragraphDrill, optional paragraphs), obeying the
+allowed-characters rule.
+
+INSIDE EVERY LESSON: FIVE STEPS
+-------------------------------
+1. Watch (new). About five seconds, not scored, with a Skip button. The 3D
+   keyboard shows the lesson's new keys, the finger that presses each and its
+   reach line. For a lesson with no new keys it shows what the lesson is about.
+2. Keys. Today's "character" step.
+3. Words. Today's "word" step.
+4. Sentences. Today's "paragraph" step.
+5. Challenge (new). Thirty seconds on this lesson's own words against the
+   level's speed target.
+
+- The three early lessons that have no real words keep today's behaviour: Keys
+  is followed by today's "mixed" step instead of Words and Sentences.
+- Timed lessons and tests keep a single timed step. Review lessons, bosses and
+  Pro lessons may use fewer steps.
+- Today the timed text is taken from Mastery paragraphs. Timed and Challenge
+  steps in earlier levels must take text from that lesson's allowed words.
+- Stars are worked out as today. Crown: finish Challenge at or above the level
+  target with 95% accuracy or better. Targets in words per minute: Beginner 12,
+  Intermediate 18, Advanced 24, Mastery 35, Pro 30.
+
+Placement test: a first-time visitor is offered a 2-minute test, which can be
+skipped. Below 15 words per minute or below 85% accuracy suggests Level 1; 15 to
+25 suggests Level 2; 25 to 35 suggests Level 3; above 35 at 92% or better
+suggests Level 4. It is only a suggestion.
+
+BOSS BATTLES
+------------
+A boss ends each unit and uses only that unit's keys. The boss has a health bar.
+Each correct word hits it, by the word's length. Each mistake heals it a little
+and shakes the screen. A timer bar is the boss's attack: when it empties the
+learner loses one of three hearts. Words get harder in three phases. The boss is
+beaten when its health reaches zero with 90% accuracy or better; below 90% it
+escapes and the learner can retry. Rewards: XP and badge progress.
+
+THE ARCADE: EIGHT GAMES
+-----------------------
+Every game uses only keys the learner has learned (the allowed set of the
+furthest lesson they have completed; with no progress, the home row). Every game
+ends with a score, the learner's best, XP earned, Play again and Back.
+
+1. Word Storm. Rebuild today's falling-words game and give it this name (today
+   it is labelled Space Invaders). Words fall; typing one destroys it; long
+   words are bosses that take several hits; three lives. Add waves that speed
+   up every ten words, gold power-up words ("freeze" slows everything for five
+   seconds, "clear" empties the screen), a combo multiplier for words cleared
+   without a wrong key, a starfield with depth, and particle bursts.
+2. Beat Keys. Rebuild today's Metronome as a lane drawn in perspective. Letters
+   ride toward a hit line on the beat. Within 60 ms of the beat is Perfect,
+   within 160 ms is Good, otherwise Miss. Speeds 60, 80, 100, 120 and 140 beats
+   a minute. Combo and on-beat percentage as today.
+3. Tug-of-War. Rebuild today's game as best of three rounds with an animated
+   rope and flag. Three kinds of bot: Steady, Sprinter (fast start, then
+   fades), Late Surger (slow start, fast finish). Speeds 30, 45, 60 and 80
+   words per minute as today.
+4. Ghost Race (new). Save the key timings of the learner's best run for each
+   passage length. Race that replay and three bots on a track drawn in
+   perspective. With no saved run yet, race the bots and record one.
+5. Key Pop (new). Balloons carry single letters upward. Pressing the letter
+   pops it. Five escaped balloons end the game. Speed rises slowly. Built for
+   beginners.
+6. Word Tower (new). Sixty seconds. Each correct word adds a block to a 3D
+   tower. A mistake makes the tower wobble and removes the top block. Height is
+   the score.
+7. Safe Cracker (new). Codes made of digits and symbols the learner knows. Each
+   correct code turns the dial; three codes open a safe; the time per safe
+   shrinks. If the learner has not reached the number row, offer a letters-only
+   easy mode.
+8. Boss Battles. The course bosses, replayable here once met.
+
+Daily Challenge: one passage a day, chosen from the date so it needs no server.
+The first finished run of the day counts and is compared with the learner's own
+earlier days.
+
+REWARDS
+-------
+- XP: 10 for each finished step, 20 for each star earned for the first time, 50
+  for a crown, 100 for a boss, 30 for each daily quest, and up to 50 for a game
+  run.
+- Ranks by total XP: Apprentice 0, Copyist 300, Clerk 900, Stenographer 2,000,
+  Correspondent 4,000, Editor 7,000, Master Typist 11,000. A rank-up shows a
+  short celebration.
+- Daily goal of 5, 10, 15 or 20 minutes (default 10) and three daily quests
+  picked from the date, for example: finish two lessons; one run at 95% or
+  better; play any game; do the problem-keys drill; beat a personal best.
+- Streak: today's rule stays. Add one freeze a week: one missed day is forgiven.
+- 36 badges, drawn as SVG medals that flip over to show how they are earned:
+  Speed: First 20, Thirty Club, Forty Flat, Fifty Up, Sixty Plus, Eighty Ace
+    (reach that many words per minute in a lesson or test).
+  Accuracy: Clean Sheet (a lesson at 100%), Triple Clean (three 100% runs in a
+    row), Sharp Shooter (98% or better on ten lessons), No Slip (a Sentences
+    step with no mistake), Steady Hand (95% or better on a 5-minute test).
+  Streak: Three Days, Seven Days, Two Weeks, Thirty Days, Hundred Days.
+  Course: Home Row Hero (three stars on every home row lesson), Top Row
+    Climber, Number Cruncher, Bottom Row Diver, Capital Idea, Symbol Master
+    (finish that unit), All 26 (the All 26 letters lesson at 95% or better),
+    Master Typist (beat the final boss).
+  Bosses: Boss Down (one), Boss Hunter (three), Boss Slayer (all six).
+  Arcade: Storm Chaser (1,000 points in Word Storm), On the Beat (a 30 combo in
+    Beat Keys), Rope Burn (beat the 80 words-per-minute bot), Ghost Beaten
+    (beat your own replay), Sky High (a tower of 25), Safe Hands (ten safes in
+    one run).
+  Habit: Early Bird (practise before 8 am), Night Owl (after 10 pm), Daily
+    Dozen (all three quests on twelve different days).
+- Certificates at 20, 30, 40, 50 and 60 words per minute, earned on a timed test
+  of one minute or longer at 95% accuracy or better. Each is an SVG page with a
+  border and seal showing the learner's name, speed, accuracy, test length and
+  date, and prints cleanly from the browser.
+- Workshop unlocks by rank, all cosmetic: keycap sets (Standard issue from the
+  start, Ivory and brass at Copyist, Signal red at Clerk, Blueprint at
+  Stenographer, and two more of your design at Editor and Master Typist), three
+  extra ink colours, two extra paper stocks, key sounds (Typewriter, Soft,
+  Click, Off). Background themes are free from the start.
+
+WORKS OFFLINE
+-------------
+Add a web app manifest with icons made from the logo, and a service worker that
+caches the app's own files so lessons and games work without internet. Never
+cache anything under /api. When a new version is ready, show a small "Update
+ready, reload" message. Today's sync queue sends saved work when the connection
+returns.
+
+CHECKS BEFORE YOU SAY A PHASE IS DONE
+-------------------------------------
+- The allowed-characters check passes for all 78 lessons.
+- All ids are unique and l1 to l24 are all present.
+- Load a progress save made by today's version: stars, best speeds and the
+  streak are unchanged.
+- Typing in a lesson with Effects on Full: a key press is on screen within one
+  frame. Measure it and tell me the number.
+- Every screen at 1440, 768 and 400 px wide, in Floating letters, in two other
+  dark themes and in Paper, with Effects Off, and with reduced motion on.
+- No errors in the browser console.
+- Sign up, sign in, sync and sign out against a test account only. Never touch
+  real users' data.
+- Data checks, written as automated tests against a local database:
+  1. Finish two steps of lesson 3 in one browser. Sign in from a second browser:
+     Continue opens lesson 3 at step 3, and the scorecard is the same in both.
+  2. Go offline, finish a lesson, come back online: exactly one run is saved.
+  3. Send the same batch of events twice: no total changes.
+  4. Play on two browsers at the same time: nothing is lost, the best result
+     wins.
+  5. Sign up as a guest who already has progress: every star and best speed
+     arrives in the account once.
+  6. Run the nightly rebuild: zero differences.
+  7. Delete the account: no rows remain for that user.
+
+ORDER OF WORK
+-------------
+Phase 1. Foundation: colours, themes, the top bar, navigation, Settings, and the
+         new look on every existing screen. No change in behaviour.
+Phase 2. Data and server: the tables, migrations, APIs, sync, saved position and
+         scorecard, with the data checks passing. Every later phase saves
+         through these APIs from its first day.
+Phase 3. The 3D typewriter and keyboard guide, on the home screen and in lessons.
+Phase 4. The course: 78 lessons, five steps, crowns, the placement test, the
+         course map, boss battles.
+Phase 5. Rewards: XP, ranks, quests, streak freeze, badges, certificates, and
+         the Progress screen.
+Phase 6. The arcade: rebuild three games, add five, add the Daily Challenge.
+Phase 7. Workshop, offline install, the nightly job, the owner's health page,
+         final polish, and every check above.
+
+WHEN YOU FINISH
+---------------
+Give me a short report: what is done, what is not done, how to run it, the result
+of each check, the list of database tables and APIs, and the exact commands for
+the migrations and the deploy, which I will run myself. Do not deploy.

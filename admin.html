@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" data-bg="letters">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TypeCraft · health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Owner-only health page. Served by the Worker to the emails in OWNER_EMAILS only. Tokens from docs/design-preview.html. */
+:root{
+  color-scheme:dark;
+  --bg:#070b0a; --surface:#101716; --raise:#172120;
+  --text:#ece7d9; --muted:#96a39e;
+  --line:rgba(236,231,217,.12); --line-strong:rgba(236,231,217,.26);
+  --teal:#5fd6c0; --teal-deep:#2e9a89; --teal-ink:#0b1514; --teal-soft:rgba(95,214,192,.13);
+  --violet:#a594ff; --brass:#e2b65f; --brass-soft:rgba(226,182,95,.14);
+  --red:#ff7b6e; --red-soft:rgba(255,123,110,.16);
+  --g1:rgba(95,214,192,.20); --g2:rgba(126,108,255,.14); --g3:rgba(226,182,95,.10);
+  --glass:rgba(255,255,255,.04); --glass-2:rgba(255,255,255,.09); --glass-line:rgba(255,255,255,.15); --deep:rgba(0,0,0,.8);
+  --display:'Fraunces',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:16px/1.55 var(--sans);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 480px at 12% -120px,var(--g1),transparent 70%),radial-gradient(700px 420px at 92% 10%,var(--g2),transparent 70%),radial-gradient(800px 400px at 50% 110%,var(--g3),transparent 70%);background-attachment:fixed}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 64px;display:flex;flex-direction:column;gap:28px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font:600 26px/1 var(--display);letter-spacing:-.02em}
+.brand svg{width:30px;height:30px}
+.brand em{color:var(--teal);font-style:italic}
+.bm1{fill:var(--teal-deep)} .bm2{fill:var(--teal)} .bm3{fill:var(--teal-ink)}
+.tag{font:500 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-strong);border-radius:999px;padding:6px 10px}
+h1{font:560 clamp(30px,4.6vw,48px)/1.08 var(--display);letter-spacing:-.012em;margin:0;
+  background:linear-gradient(120deg,var(--text) 30%,var(--teal) 70%,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{font:500 11.5px/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted);font-size:14px}
+.glass{background:linear-gradient(160deg,var(--glass-2),var(--glass));border:1px solid var(--glass-line);border-radius:18px;
+  box-shadow:0 30px 50px -34px var(--deep),inset 0 1px 0 var(--glass-line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.tile{padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px;min-height:118px}
+.tile b{font:600 clamp(30px,4vw,40px)/1 var(--mono);font-variant-numeric:tabular-nums}
+.tile.good b{color:var(--teal)} .tile.warn b{color:var(--brass)} .tile.bad b{color:var(--red)}
+.tile .sub{font-size:13px;color:var(--muted)}
+.panel{padding:20px}
+.panel h2{font:560 22px/1.2 var(--display);margin:0 0 10px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{font:500 11px/1.2 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+td.n{font-family:var(--mono);text-align:right}
+.key{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:10px 16px;font:600 14px/1 var(--sans);
+  color:var(--teal-ink);background:var(--teal);box-shadow:0 4px 0 var(--teal-deep),0 10px 24px -10px var(--teal);cursor:pointer;transition:transform .08s,box-shadow .08s}
+.key:active{transform:translateY(3px);box-shadow:0 1px 0 var(--teal-deep)}
+.key:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+.badge{display:inline-block;font:500 12px/1 var(--mono);padding:5px 9px;border-radius:999px;border:1px solid currentColor}
+.ok{color:var(--teal)} .no{color:var(--red)}
+#error{display:none;padding:14px 18px;border-color:var(--red);color:var(--text)}
+#error.show{display:block}
+@media (prefers-reduced-motion:reduce){.key{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect class="bm1" x="3" y="7" width="34" height="30" rx="8"></rect><rect class="bm2" x="3" y="3" width="34" height="29" rx="8"></rect><path class="bm3" d="M12.5 11.5h15v4.2h-5.3V25h-4.4v-9.3h-5.3z"></path></svg>
+      <span>type<em>craft</em></span>
+      <span class="tag">owner · health</span>
+    </div>
+    <button type="button" class="key" id="refresh">Refresh</button>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow">Today, UTC</span>
+    <h1>How the saving is going</h1>
+    <p class="muted" id="asof">Loading…</p>
+  </section>
+
+  <div id="error" class="glass" role="alert"></div>
+
+  <section class="tiles" aria-label="Today">
+    <div class="glass tile"><span class="eyebrow">Learners</span><b id="learners">–</b><span class="sub">accounts in total</span></div>
+    <div class="glass tile"><span class="eyebrow">Active today</span><b id="activeToday">–</b><span class="sub">learners who saved something</span></div>
+    <div class="glass tile"><span class="eyebrow">Runs today</span><b id="runsToday">–</b><span class="sub" id="eventsToday">events saved</span></div>
+    <div class="glass tile" id="rejTile"><span class="eyebrow">Refused or failed</span><b id="rejected">–</b><span class="sub" id="rejSub">today</span></div>
+    <div class="glass tile" id="diffTile"><span class="eyebrow">Nightly differences</span><b id="differences">–</b><span class="sub" id="diffSub">last rebuild</span></div>
+  </section>
+
+  <section class="glass panel">
+    <h2>Last nightly rebuild</h2>
+    <p class="muted" id="rebuildText">No rebuild has run yet.</p>
+    <table id="diffTable" hidden><thead><tr><th>Table</th><th style="text-align:right">Differences fixed</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section class="glass panel">
+    <h2>Refused events, last 7 days</h2>
+    <p class="muted" id="reasonsEmpty">None. Every event sent was valid and saved.</p>
+    <table id="reasons" hidden><thead><tr><th>Reason</th><th style="text-align:right">Events</th></tr></thead><tbody></tbody></table>
+    <p class="muted" style="margin-top:12px">Events waiting in learners' browsers can't be seen from here: they are counted once they arrive. "Failed" means the server was busy and the browser will send them again.</p>
+  </section>
+</div>
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => (n == null ? '–' : Number(n).toLocaleString('en'));
+  function rows(tbody, list, a, b){
+    tbody.textContent = '';
+    for (const r of list){
+      const tr = document.createElement('tr');
+      const t1 = document.createElement('td'); t1.textContent = r[a];
+      const t2 = document.createElement('td'); t2.className = 'n'; t2.textContent = fmt(r[b]);
+      tr.append(t1, t2); tbody.append(tr);
+    }
+  }
+  async function load(){
+    $('error').className = 'glass';
+    try{
+      const res = await fetch('/api/admin/health', { headers:{ Accept:'application/json' }, cache:'no-store' });
+      const h = await res.json();
+      if(!res.ok) throw new Error((h.error && h.error.message) || 'Could not load the numbers.');
+      $('asof').textContent = 'As of ' + new Date(h.at).toLocaleString();
+      $('learners').textContent = fmt(h.learners);
+      $('activeToday').textContent = fmt(h.activeToday);
+      $('runsToday').textContent = fmt(h.runsToday);
+      $('eventsToday').textContent = fmt(h.eventsToday) + ' events saved';
+      const bad = h.rejectedToday + h.failedToday;
+      $('rejected').textContent = fmt(bad);
+      $('rejSub').textContent = fmt(h.rejectedToday) + ' refused, ' + fmt(h.failedToday) + ' failed today · ' + fmt(h.rejected7d + h.failed7d) + ' in 7 days';
+      $('rejTile').className = 'glass tile ' + (bad ? 'warn' : 'good');
+      const lr = h.lastRebuild;
+      $('differences').textContent = lr ? fmt(lr.differences) : '–';
+      $('diffTile').className = 'glass tile ' + (!lr ? '' : lr.differences ? 'bad' : 'good');
+      $('diffSub').textContent = lr ? (lr.differences ? 'found and fixed (should be zero)' : 'zero, as it should be') : 'not run yet';
+      if(lr){
+        $('rebuildText').textContent = 'Started ' + new Date(lr.at).toLocaleString() + (lr.finishedAt ? ', finished ' + new Date(lr.finishedAt).toLocaleTimeString() : ', still running or stopped') +
+          '. ' + fmt(lr.users) + ' learners checked, ' + fmt(lr.differences) + ' differences, ' + fmt(lr.errors) + ' errors.';
+        $('diffTable').hidden = !lr.byTable.length; rows($('diffTable').tBodies[0], lr.byTable, 'table_name', 'n');
+      }
+      $('reasons').hidden = !h.rejectReasons7d.length; $('reasonsEmpty').hidden = !!h.rejectReasons7d.length;
+      rows($('reasons').tBodies[0], h.rejectReasons7d, 'reason', 'n');
+    }catch(e){
+      $('error').textContent = e.message; $('error').className = 'glass show';
+    }
+  }
+  $('refresh').addEventListener('click', load);
+  load();
+})();
+</script>
+</body>
+</html>

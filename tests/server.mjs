@@ -16,6 +16,14 @@ export function makeEnv(extra = {}) {
   const ASSETS = { fetch: async (req) => {
     const p = new URL(req.url).pathname;
     if (p === '/' || p === '/index.html') return new Response(readFileSync(path.join(root, 'index.html')), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    if (p === '/admin') return new Response(readFileSync(path.join(root, 'admin.html')), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    if (p === '/admin.html') return new Response(null, { status: 307, headers: { Location: '/admin' } });
+    // other public files (css/, js/, shared/, icons/, sw.js, manifest), like Workers static assets
+    const TYPES = { '.css':'text/css', '.js':'text/javascript', '.svg':'image/svg+xml', '.webmanifest':'application/manifest+json', '.html':'text/html; charset=utf-8' };
+    const safe = path.normalize(p).replace(/^([/\\])+/, '');
+    if (/^(css|js|shared|icons)\//.test(safe) || safe === 'sw.js' || safe === 'manifest.webmanifest') {
+      try { return new Response(readFileSync(path.join(root, safe)), { headers: { 'Content-Type': TYPES[path.extname(safe)] || 'application/octet-stream' } }); } catch { /* falls through to 404 */ }
+    }
     return new Response('Not found', { status: 404 });
   } };
   return { DB, ASSETS, EMAIL_FROM: '', ...extra };
