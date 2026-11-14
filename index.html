@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/next.css">
+<link rel="stylesheet" href="css/games.css">
+<link rel="stylesheet" href="css/rewards.css">
 </head>
 <body>
 <canvas id="bgfx" hidden aria-hidden="true"></canvas>
@@ -57,9 +59,12 @@
         <p class="lede">Lessons from the home row to full speed, a coach that finds your weak keys, and an arcade for when you've earned a break. Free, no ads.</p>
       </section>
       <div class="home-stats" id="homeStats"></div>
+      <div id="placementOffer" class="coach-panel continue-panel" hidden></div>
       <div id="continuePanel" class="coach-panel continue-panel" hidden></div>
+      <div id="questsPanel" class="quests-slot"></div>
       <div id="coachPanel" class="coach-panel"></div>
       <div id="reviewPanel" class="review-panel"></div>
+      <div class="course-map" id="courseMap" aria-label="Course map"></div>
       <div class="config-bar" id="tierFilter"></div>
       <div id="cardDashboard" class="card-dashboard"></div>
       <div class="home-themes" id="homeThemes" role="group" aria-label="Background theme"><span class="eyebrow">Background</span></div>
@@ -86,6 +91,14 @@
           </div>
         </div>
 
+        <div class="watch-panel" id="watchPanel" hidden>
+          <div class="eyebrow">Watch · not scored</div>
+          <div class="watch-keys" id="watchKeys"></div>
+          <p class="watch-note" id="watchNote"></p>
+          <div class="watch-foot"><div class="watch-bar"><i id="watchBar"></i></div><button class="btn secondary" id="watchSkip">Skip</button></div>
+        </div>
+        <div class="boss-mount" id="bossMount" hidden></div>
+        <div class="step-note" id="stepNote" hidden></div>
         <div class="paper-wrap">
           <div class="paper" id="paper">
             <div class="text-display" id="textDisplay"></div>
@@ -132,161 +145,20 @@
       </div>
     </div>
 
-    <!-- ============ FUN MODE HUB ============ -->
+    <!-- ============ ARCADE ============ -->
     <div id="funSelectView">
       <p class="need-kb">The arcade games need a real keyboard. If one is connected, go ahead.</p>
-      <div class="lesson-head">
-        <button class="back-btn" id="funBackBtn">&larr; Back to dashboard</button>
-      </div>
-      <div class="fun-grid">
-        <div class="fun-card">
-          <div class="fun-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10.2a4 4 0 0 1 8 0"/><ellipse cx="12" cy="12.6" rx="9" ry="3.3"/><path d="M7 17.8l-1.4 2.6M12 18.4v3M17 17.8l1.4 2.6"/></svg></div>
-          <div class="fun-title">Space Invaders</div>
-          <div class="fun-desc">Words fall like ships. Type them before they land. Long words are boss fights.</div>
-          <button class="btn primary" id="playSiBtn">Play</button>
-        </div>
-        <div class="fun-card">
-          <div class="fun-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 3.5h5.6l3.7 17h-13z"/><path d="M12 16.2l4.6-9.4M7.3 16.2h9.4"/></svg></div>
-          <div class="fun-title">Metronome Rhythm</div>
-          <div class="fun-desc">A steady click sets the beat. Type exactly on time to build combo and perfect rhythm.</div>
-          <select id="metroBpmSelect" class="btn secondary" style="width:100%; text-align:center;">
-            <option value="60">60 BPM — Relaxed</option>
-            <option value="80" selected>80 BPM — Steady</option>
-            <option value="100">100 BPM — Brisk</option>
-            <option value="120">120 BPM — Fast</option>
-          </select>
-          <button class="btn primary" id="playMetroBtn">Play</button>
-        </div>
-        <div class="fun-card">
-          <div class="fun-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 16h19M12 16V5M12 5.5h6.5l-2 2.6 2 2.6H12M5.5 14v4M18.5 14v4"/></svg></div>
-          <div class="fun-title">Tug-of-War</div>
-          <div class="fun-desc">Race a bot typist. Outpace it to pull the flag to your side before the paragraph ends.</div>
-          <select id="towBotSpeedSelect" class="btn secondary" style="width:100%; text-align:center;">
-            <option value="30">Bot speed: 30 WPM — Easy</option>
-            <option value="45" selected>Bot speed: 45 WPM — Medium</option>
-            <option value="60">Bot speed: 60 WPM — Hard</option>
-            <option value="80">Bot speed: 80 WPM — Brutal</option>
-          </select>
-          <button class="btn primary" id="playTowBtn">Play</button>
-        </div>
-      </div>
+      <div class="page-head"><p class="eyebrow">Arcade</p><h1>Eight games, one skill each</h1>
+        <p class="lede">Every game uses only the keys you have learned, so you can play from your first lesson.</p></div>
+      <section class="daily-banner glass" id="dailyBanner"></section>
+      <div class="tcg-cards" id="arcadeCards"></div>
     </div>
-
-    <!-- ============ SPACE INVADERS ============ -->
-    <div id="spaceInvadersView">
-      <div class="lesson-head">
-        <button class="back-btn" id="siBackBtn">&larr; Back to fun mode</button>
-      </div>
-      <div class="si-hud">
-        <div class="si-hud-item">Score: <span id="siScore">0</span></div>
-        <div class="si-hud-item" id="siLives">❤️❤️❤️</div>
-      </div>
-      <div class="si-canvas-wrap">
-        <canvas id="siCanvas" width="880" height="440"></canvas>
-        <div class="si-gameover hidden" id="siGameOver">
-          <h3>Game over</h3>
-          <div class="si-score-big" id="siFinalScore">0</div>
-          <div class="results-actions">
-            <button class="btn primary" id="siReplayBtn">Play again</button>
-            <button class="btn secondary" id="siExitBtn">Back to fun mode</button>
-          </div>
-        </div>
-      </div>
-      <p class="si-hint">Just start typing any falling word — no need to click first.</p>
-    </div>
+    <div id="arcadePlay"><div class="lesson-head"><button class="back-btn" id="arcadeBackBtn">&larr; Back to the arcade</button></div><div class="arcade-stage" id="arcadeStage"></div></div>
 
     <!-- ============ RESULTS VIEW ============ -->
     <section id="resultsView" class="results-view hidden">
-      <div class="results-card">
-        <h2>Lesson complete</h2>
-        <div class="results-stars" id="resultsStars"></div>
-        <canvas id="wpmChart" width="600" height="200"></canvas>
-        <div class="chart-legend">
-          <span class="legend-item"><i class="dot dot-wpm"></i> WPM over time</span>
-          <span class="legend-item"><i class="dot dot-acc"></i> Average accuracy</span>
-        </div>
-        <div class="results-grid">
-          <div class="rstat"><div class="rlabel">WPM</div><div class="rvalue" id="finalWpm">0</div></div>
-          <div class="rstat"><div class="rlabel">Accuracy</div><div class="rvalue" id="finalAcc">0%</div></div>
-          <div class="rstat"><div class="rlabel">Errors</div><div class="rvalue" id="finalErr">0</div></div>
-          <div class="rstat"><div class="rlabel">Time</div><div class="rvalue" id="finalTime">0s</div></div>
-        </div>
-        <div class="results-actions">
-          <button id="retryBtn" class="btn primary">Retry (Tab)</button>
-          <button id="dashboardBtn" class="btn secondary">Back to dashboard</button>
-        </div>
-      </div>
+      <div class="results-wrap" id="resultsBody"></div>
     </section>
-
-    <!-- ============ METRONOME RHYTHM CHALLENGE ============ -->
-    <div id="metronomeView">
-      <div class="lesson-head"><button class="back-btn" id="metroBackBtn">&larr; Back to fun mode</button></div>
-      <div class="si-hud">
-        <div class="si-hud-item">Score: <span id="metroScore">0</span></div>
-        <div class="si-hud-item">Combo: <span id="metroCombo">0</span>x</div>
-        <div class="si-hud-item">On-Beat: <span id="metroOnBeat">100</span>%</div>
-        <div class="beat-dot" id="beatDot"></div>
-      </div>
-      <div class="paper-wrap">
-        <div class="paper" id="metroPaper">
-          <div class="text-display" id="metroTextDisplay"></div>
-          <textarea id="metroTyper" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
-        </div>
-        <div class="start-hint" id="metroStartHint"><span>click here, then type in time with the beat</span></div>
-      </div>
-      <p class="si-hint">Type each letter as close to the click as you can — early or late breaks your combo.</p>
-    </div>
-    <div class="overlay hidden" id="metroResultsOverlay">
-      <div class="results-card">
-        <h2>Rhythm session complete</h2>
-        <div class="results-grid">
-          <div class="rstat"><div class="rlabel">Final Score</div><div class="rvalue" id="metroFinalScore">0</div></div>
-          <div class="rstat"><div class="rlabel">Best Combo</div><div class="rvalue" id="metroBestCombo">0</div></div>
-          <div class="rstat"><div class="rlabel">On-Beat</div><div class="rvalue" id="metroFinalOnBeat">0%</div></div>
-          <div class="rstat"><div class="rlabel">BPM</div><div class="rvalue" id="metroFinalBpm">0</div></div>
-        </div>
-        <div class="results-actions">
-          <button class="btn primary" id="metroReplayBtn">Play again</button>
-          <button class="btn secondary" id="metroExitBtn">Back to fun mode</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============ TUG-OF-WAR ============ -->
-    <div id="tugOfWarView">
-      <div class="lesson-head"><button class="back-btn" id="towBackBtn">&larr; Back to fun mode</button></div>
-      <div class="si-hud">
-        <div class="si-hud-item">You: <span id="towUserWpm">0</span> WPM</div>
-        <div class="si-hud-item">Bot: <span id="towBotWpmLabel">0</span> WPM</div>
-      </div>
-      <div class="tow-track">
-        <div class="tow-label tow-label-left">YOU</div>
-        <div class="tow-bar"><div class="tow-flag" id="towFlag"></div></div>
-        <div class="tow-label tow-label-right">BOT</div>
-      </div>
-      <div class="paper-wrap">
-        <div class="paper" id="towPaper">
-          <div class="text-display" id="towTextDisplay"></div>
-          <textarea id="towTyper" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
-        </div>
-        <div class="start-hint" id="towStartHint"><span>click here, then start typing to pull the flag</span></div>
-      </div>
-      <p class="si-hint">Every correct letter pulls the flag your way — outpace the bot before it finishes.</p>
-    </div>
-    <div class="overlay hidden" id="towResultsOverlay">
-      <div class="results-card">
-        <h2 id="towResultTitle">Round complete</h2>
-        <div class="results-grid">
-          <div class="rstat"><div class="rlabel">Your WPM</div><div class="rvalue" id="towFinalUserWpm">0</div></div>
-          <div class="rstat"><div class="rlabel">Bot WPM</div><div class="rvalue" id="towFinalBotWpm">0</div></div>
-        </div>
-        <div class="results-actions">
-          <button class="btn primary" id="towReplayBtn">Play again</button>
-          <button class="btn secondary" id="towExitBtn">Back to fun mode</button>
-        </div>
-      </div>
-    </div>
-
 
     <!-- ============ ACCOUNT ============ -->
     <div id="accountView">
@@ -484,6 +356,19 @@
   </div>
 
 <script src="shared/course-meta.js"></script>
+<script src="shared/rewards-rules.js"></script>
+<script src="js/course.js"></script>
+<script src="js/games/core.js"></script>
+<script src="js/games/storm.js"></script>
+<script src="js/games/beat.js"></script>
+<script src="js/games/tug.js"></script>
+<script src="js/games/ghost.js"></script>
+<script src="js/games/pop.js"></script>
+<script src="js/games/tower.js"></script>
+<script src="js/games/safe.js"></script>
+<script src="js/games/boss.js"></script>
+<script src="js/games/daily.js"></script>
+<script src="js/rewards-ui.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

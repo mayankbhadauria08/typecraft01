@@ -1,238 +1,48 @@
 /* ==========================================================================
-   1. LESSON PLAN — 24 lessons, 6 tiers.
-      `teach` lists the characters a lesson introduces; a lesson may only use
-      characters taught by itself or an earlier lesson (capitals only after
-      the Shift lesson). Lesson ids are permanent: saved progress is keyed by
-      them, so lessons can be reordered but never renumbered.
+   1. COURSE — 78 lessons in five levels (js/course.js, shared/course-meta.js)
+   Lesson ids l1–l24 are permanent: saved progress is keyed by them.
+   The number a learner sees is the position in the course (TC_META), not the id.
    ========================================================================== */
-const lessons = [
-  { id:'l1', tier:'Beginner — Home Row', keys:['F','J'], teach:'fj', title:'Home Base',
-    charDrill:"fff jjj fj fj jf jf fjf jfj ff jj fjfj jfjf" },
-  { id:'l2', tier:'Beginner — Home Row', keys:['D','K'], teach:'dk', title:'Adding D & K',
-    charDrill:"ddd kkk dk dk kd kd dkd kdk fjdk kdjf" },
-  { id:'l3', tier:'Beginner — Home Row', keys:['S','L'], teach:'sl', title:'Adding S & L',
-    charDrill:"sss lll sl sl ls ls sls lsl fjdksl lskdjf" },
-  { id:'l4', tier:'Beginner — Home Row', keys:['A',';'], teach:'a;', title:'Adding A & ;',
-    charDrill:"aaa ;;; a; a; ;a ;a a;a ;a; fjdksla ;alskdjf",
-    wordDrill:["dad","sad","lad","ask","add","fads","flask","salad","salsa","alfalfa"],
-    paragraphDrill:"a lad asks a dad; a sad lad adds a flask; salad falls; salsa falls; a lass asks a lad; alfalfa falls; add a flask; ask a lass" },
-  { id:'l5', tier:'Beginner — Home Row', keys:['G','H'], teach:'gh', title:'Filling In G & H',
-    charDrill:"ggg hhh gh gh hg hg ghg hgh half glass flash",
-    wordDrill:["half","glass","flash","gala","gash","hall","lag","gas","ask","flask"],
-    paragraphDrill:"a lad has a flask; a gala had a glass; glass falls; a flash; a gash; ask a lass; half a salad falls; add a dash salsa" },
-  { id:'l6', tier:'Beginner — Home Row', keys:['fluency'], teach:'', title:'Home Row Fluency',
-    charDrill:"asdfghjkl; ;lkjhgfdsa asdf jkl; fdsa lkj;",
-    wordDrill:["flask","glass","salad","salsa","alfalfa","half","flash","gala","ask","lass"],
-    paragraphDrill:"dad had a flask; a lad asks a lass; glass falls; salsa gala; ask dad; a sad lad had a glass flask; all glass falls; add salsa; ask a lass" },
+const lessons = TC_COURSE.lessons;
+const LEVELS = TC_META.LEVELS;
+const LEVEL_ACCENT = {1:'#4a9a68', 2:'#4a90c2', 3:'#d2704a', 4:'#c0629a', 5:'#7d7fd1'};
+const TIER_ORDER = LEVELS.map(l => l.name);                      // the level filter on the dashboard
+const TIER_ACCENT = Object.fromEntries(LEVELS.map(l => [l.name, LEVEL_ACCENT[l.n]]));
+const levelOf = (lesson) => LEVELS.find(l => l.n === lesson.level) || LEVELS[0];
 
-  { id:'l7', tier:'Intermediate — Top Row', keys:['E','I'], teach:'ei', title:'Reaching for E & I',
-    charDrill:"eee iii ei ei ie ie eie iei fjdksl eifj iehg",
-    wordDrill:["side","hide","life","aide","die","lid","kid","field","shield","dial"],
-    paragraphDrill:"a kid hides a die; a shield aids a lad; life is a gas; a field lies; a lass hides a lid; a die falls; a kid slides" },
-  { id:'l8', tier:'Intermediate — Top Row', keys:['R','T'], teach:'rt', title:'Reaching for R & T',
-    charDrill:"rtrt trtr rt tr rat tar art trade dirt",
-    wordDrill:["rat","tar","art","dirt","trail","start","stare","tire","tired","state"],
-    paragraphDrill:"the star has light; dirt hides the tale; a trail leads a kid; a rat starts a fire; a lid falls; her sister stares; she stirs the salad; a tired girl rests" },
-  { id:'l9', tier:'Intermediate — Top Row', keys:['W','O'], teach:'wo', title:'Reaching for W & O',
-    charDrill:"wo ow wow low tow flow slow throw shadow",
-    wordDrill:["low","tow","flow","slow","throw","shadow","word","grow","glow","wood"],
-    paragraphDrill:"the old fowl was slow to grow; a low tide throws a shadow; a word of gold falls; she rows to shore; a girl trades a dirt trail for a low road" },
-  { id:'l10', tier:'Intermediate — Top Row', keys:['U','P'], teach:'up', title:'Reaching for U & P',
-    charDrill:"up pu pup put pat pot pet pit pull push",
-    wordDrill:["put","pup","pull","push","pure","pour","plus","pile","upset","output","spout","path"],
-    paragraphDrill:"she put the pup out; a pilot pours a hot drip; the plot was set apart; push the pail up the path; the spot was pale" },
-  { id:'l11', tier:'Intermediate — Top Row', keys:['Y','Q'], teach:'yq', title:'Reaching for Y & Q',
-    charDrill:"yq qy yes yet quit quiet quest year",
-    wordDrill:["your","yes","yet","quit","quiet","quest","quote","query","story","study","sturdy","truly"],
-    paragraphDrill:"your quiet quest stays true at dusk; a study of trust guides you truly; a story tours the world; she tries to quote it slowly" },
-  { id:'l12', tier:'Intermediate — Numbers', keys:['1','2','3','4','5'], teach:'12345', title:'Number Row: 1–5',
-    charDrill:"1 2 3 4 5 11 22 33 a1 s2 d3 f4 g5",
-    wordDrill:["12","34","51","23","45","142","215","314","521","413"],
-    paragraphDrill:"flight 415 departs at gate 23; the door is 512; she has 21 keys; 34 pages hold a total of 125" },
-  { id:'l13', tier:'Intermediate — Numbers', keys:['6','7','8','9','0'], teach:'67890', title:'Number Row: 6–0',
-    charDrill:"6 7 8 9 0 67 89 90 606 707",
-    wordDrill:["67","89","90","1990","2024","60","78","906","1000","250"],
-    paragraphDrill:"the year 1990 had 60 hot days; 78 people saw 90 stars; she kept a diary of 250 pages; a total of 1000 words" },
-
-  { id:'l14', tier:'Advanced — Bottom Row', keys:['V','M'], teach:'vm', title:'Reaching for V & M',
-    charDrill:"vm mv move have make time game visit",
-    wordDrill:["move","have","make","time","game","mile","visit","vivid","value","smile"],
-    paragraphDrill:"we move a mile every visit; make more time; a vivid memory stays; she gives a warm smile; a movie starts the same day" },
-  { id:'l18', tier:'Advanced — Bottom Row', keys:['B','N'], teach:'bn', title:'Reaching for B & N',
-    charDrill:"bn nb ban bun born barn bank bright",
-    wordDrill:["ban","bun","born","barn","bank","bright","bunny","between","brand","begin"],
-    paragraphDrill:"a bright bunny ran between the barn and the bank; a new brand began; she will begin a new plan now" },
-  { id:'l15', tier:'Advanced — Bottom Row', keys:['C',','], teach:'c,', title:'Reaching for C & ,',
-    charDrill:"c, ,c cat, cot, cut, come, care,",
-    wordDrill:["cat","cot","cut","come","care","voice","place","close","office","race"],
-    paragraphDrill:"come here, watch closely, then act, please; a cat sat, a cot moved, a voice spoke clearly, calm, slow, quiet" },
-  { id:'l16', tier:'Advanced — Bottom Row', keys:['X','.'], teach:'x.', title:'Reaching for X & .',
-    charDrill:"x. .x fox. box. mix. fix. next. exit.",
-    wordDrill:["fox","box","mix","fix","exit","next","text","sixty","taxi","relax"],
-    paragraphDrill:"the fox sat next to a box. it was fixed. a text was mailed. sixty taxis exit at rest." },
-  { id:'l17', tier:'Advanced — Bottom Row', keys:['Z','/'], teach:'z/', title:'Reaching for Z & /',
-    charDrill:"z/ /z size zone maze/ lazy hazy dozer",
-    wordDrill:["size","zone","maze","lazy","hazy","zero","amaze","gaze","haze","doze"],
-    paragraphDrill:"a lazy fox grazed near the size of a maze. a hazy haze filled the zone at dusk. a dozer moves slowly, a gaze holds steady." },
-  { id:'l19', tier:'Advanced — Shift & Symbols', keys:['Shift'], teach:'', shift:true, title:'Shift & Capitals',
-    charDrill:"The Cat The Dog A Big Apple New York",
-    wordDrill:["The","Cat","Monday","New York","London","Tokyo","Begins","Now","Capital","Title"],
-    paragraphDrill:"The Cat Sat. Monday Begins Now. New York, London, and Tokyo are big cities. Every Title deserves a Capital Letter.",
-    paragraphs:["Paris, Rome, and Berlin are old cities. Maria and James met in Lisbon on a Friday in June. The Atlantic Ocean lies between Europe and North America."] },
-  { id:'l20', tier:'Advanced — Shift & Symbols', keys:['!','@','#','$','%','&','*','(',')','-','_','=','+',"'",'"','?',':'], teach:`!@#$%&*()-_=+'"?:`, title:'Punctuation & Symbols',
-    charDrill:`! @ # $ % & * ( ) - _ = + ' " ? : it's don't why? note: (a) 2+2=4 50%`,
-    wordDrill:["$12.50","8%","(about)","name@example.com","555-123-4567","\"Wait!\"","he said,","costs $5","call now:","email me","don't","it's","why?","#1","a&b","x=y+1","snake_case"],
-    paragraphDrill:`He said, "Wait!" then left; it costs $12.50, about 8%. Isn't that odd? Email me at name@example.com or call 555-123-4567.`,
-    paragraphs:[`Don't panic: the file (report_v2) is 98% done & due at 5 pm. Can you check it? Use #urgent if it's late, or email ops@example.com.`] },
-
-  { id:'l21', tier:'Mastery — Fluency', keys:['speed'], teach:'', title:'Common Words Sprint',
-    charDrill:"th he in er an re nd at on nt ha es",
-    wordDrill:["the","and","for","you","are","with","this","that","from","have","they","will","one","all","can"],
-    paragraphDrill:"The most common words in English carry most of everyday writing. Once they are automatic, your hands barely pause between them, and your speed climbs on its own.",
-    paragraphs:[
-      "People often think good typists move their fingers quickly, but the real secret is that they never stop to search for a key. Every word you use each day is a chance to practice that calm, steady flow.",
-      "Short words like the, and, for, and with appear in almost every sentence you write. When your hands know them by heart, longer words feel easier, because there is less to think about between them."] },
-  { id:'l22', tier:'Mastery — Fluency', keys:['sentences'], teach:'', title:'Sentence Fluency',
-    charDrill:"th he in er an re nd at on",
-    wordDrill:["market","customers","coffee","brewed","quiet","street","busy","minutes","early","arrive"],
-    paragraphDrill:"The market opens early, and the first customers arrive before the coffee is even brewed. A quiet street turns busy within minutes.",
-    paragraphs:[
-      "The train left the station a few minutes late, but nobody seemed to mind. Most passengers had a book, a coffee, or a window to look out of, and the morning light made the fields glow.",
-      "A good recipe tells you what to do, but a good cook knows why. Taste as you go, keep your knife sharp, and clean up while the water boils, so the kitchen never gets ahead of you."] },
-  { id:'l23', tier:'Mastery — Fluency', keys:['paragraph'], teach:'', title:'Paragraph Practice',
-    charDrill:"th he in er an re nd at on nt",
-    wordDrill:["rhythm","fingers","keyboard","mechanics","disappear","practice","fluency","goal","mind","free"],
-    paragraphDrill:"Learning to type well is less about speed and more about rhythm. Once your fingers know the keyboard, your mind is free to think about the words instead of where your hands need to go. That is the real goal of practice: to make the mechanics disappear.",
-    paragraphs:[
-      "Every skill has a stage where progress feels slow and the gains are hard to see. That is usually the moment when the most important change is happening, because your habits are being rebuilt underneath the surface. Keep showing up, and one day the new way will simply feel normal.",
-      "Look at the screen, not at your hands. At first this makes you slower and you will make more mistakes, which is frustrating. But each time you resist the urge to glance down, your fingers learn the map a little better, until the keyboard becomes something you feel rather than see."] },
-  { id:'l24', tier:'Mastery — Fluency', keys:['60 seconds'], teach:'', timed:60, title:'Timed Challenge',
-    charDrill:"th he in er an re nd at on nt ha",
-    wordDrill:["wrists","relaxed","reach","accurate","automatic","favor","clean","messy","daily","lasting"],
-    paragraphDrill:"Keep both wrists low and relaxed, let your fingers return to the home row after every reach, and resist the urge to look down at the keys. Speed follows naturally once accuracy becomes automatic, so favor a slow, clean pass over a fast, messy one. Small daily sessions build more lasting skill than one long, exhausting sprint.",
-    paragraphs:["A typing test measures two things at once: how fast you move and how often you are right. The second matters more, because every error costs time to notice and fix. Aim for a pace you can hold without stumbling, then let it climb on its own."] }
-];
-
-/* what each lesson may use: everything taught by it and every lesson before it */
-(function computeAllowedKeys(){
-  const allowed = new Set([' ']); let shift = false;
-  lessons.forEach(l => {
-    for(const c of (l.teach || '')) allowed.add(c);
-    if(l.shift) shift = true;
-    l.allowed = new Set(allowed); l.allowShift = shift;
-    l.newLetters = [...(l.teach || '')].filter(c => /[a-z]/.test(c));
-  });
-})();
-
-const TIER_ORDER = [];
-lessons.forEach(l => { if(!TIER_ORDER.includes(l.tier)) TIER_ORDER.push(l.tier); });
-const TIER_ACCENT = {
-  'Beginner — Home Row':'#4a9a68', 'Intermediate — Top Row':'#4a90c2', 'Intermediate — Numbers':'#7d7fd1',
-  'Advanced — Bottom Row':'#b8862b', 'Advanced — Shift & Symbols':'#d2704a', 'Mastery — Fluency':'#c0629a'
-};
-
-/* Common English words. Each lesson's word stage draws from the ones it can
-   type with the keys taught so far, preferring words with its new letters. */
-const COMMON_WORDS = ("a about above across act add after again age ago air all almost alone along also always am among an and animal another answer any appear are area arm around art as ask at away baby back bad bag ball bank base be bear beat beautiful became because become bed been before began begin behind being believe below best better between big bird black blue boat body book both bottom box boy bread break bring brother brought build built busy but buy by call came can car care carry case cat catch caught cause cell center certain chair chance change check child choose city class clean clear close cloud cold color come common cook cool copy corner could count country course cover cross cup cut dark day dear deep desk did die different dinner do does dog done door down draw dream dress drink drive drop dry during each early earth easy eat edge egg eight either else end enough even evening ever every eye face fact fair fall family far farm fast father fear feel feet few field fight fill final find fine fire first fish five floor flower fly follow food foot for force form found four free fresh friend from front fruit full game garden gave get girl give glad glass go gold gone good got grass great green ground group grow had hair half hall hand happen happy hard has hat have he head hear heard heart heat heavy held help her here high hill him his hit hold hole home hope horse hot hour house how huge idea if in inch inside into iron is island it its job join joy jump just keep kept key kind king kitchen knew know lake land large last late laugh lay lead learn least leave led left leg less let letter level lie life lift light like line list listen little live long look lost lot loud love low made main make man many map mark market may me mean meet men middle might mile milk mind minute miss moment money month moon more morning most mother mountain move much music must my name near need never new next nice night nine no noise north nose not note nothing notice now number object of off office often oil old on once one only open or order other our out over own page paint pair paper park part pass past path pay people pick picture piece place plan plant play please point poor post pull push put quick quiet quite rain ran rather reach read ready real red remember rest rich ride right ring river road rock roll room round row rule run safe said sail salt same sand sat save saw say school sea seat second see seed seem seen sell send sent set seven shall shape share sharp she ship shoe shop short should show shut side sign silent simple since sing sister sit six size skin sky sleep slow small smell smile snow so soft soil some song soon sound south space speak special speed spell spend spring square stand star start state station stay step still stone stood stop store storm story straight strange street strong study such sugar summer sun sure surface sweet swim table tail take talk tall teach team tell ten than thank that the their them then there these they thick thin thing think third this those though thought three through throw tie time tiny to today together told tomorrow too took top total touch toward town track trade train tree trip true try turn two under until up upon us use usual valley very visit voice wait walk wall want war warm was wash watch water wave way we wear weather week well went were west what wheel when where which while white who whole why wide wild will win wind window winter wish with without woman wonder wood word work world would write wrong yard year yellow yes yet you young your").split(' ');
-
-let reviewLesson = null; // synthetic lesson built from the person's weak keys
-function getLessonById(id){ return id === 'review' ? reviewLesson : lessons.find(l => l.id === id); }
-function lessonNumber(lesson){ return lessons.indexOf(lesson) + 1; }
+let reviewLesson = null;   // synthetic lesson built from the person's weak keys
+let specialLesson = null;  // the placement test
+function getLessonById(id){
+  if(id === 'review') return reviewLesson;
+  if(id === 'placement') return specialLesson;
+  return TC_COURSE.byId(id);
+}
+function lessonNumber(lesson){ const m = TC_META.BY_ID[lesson.id]; return m ? m.n : 0; }
 
 /* ==========================================================================
-   2. PROCEDURAL TEXT GENERATORS (per stage)
+   2. TEXT FOR EACH STEP (generators live in js/course.js)
    ========================================================================== */
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[randInt(0, arr.length-1)]; }
-function shuffled(arr){ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
-function generateFromTokens(tokenString){
-  const tokens = tokenString.split(' ').filter(Boolean);
-  const itemCount = randInt(20,30);
-  const items = [];
-  for(let i=0;i<itemCount;i++){ items.push(pick(tokens)); }
-  return items.join(' ');
-}
-function generateFromPool(pool){
-  const itemCount = randInt(16,24);
-  const items = [];
-  for(let i=0;i<itemCount;i++){ items.push(pick(pool)); }
-  return items.join(' ');
-}
-/* letter groups from every key learned so far, half of them led by this lesson's new keys */
-function generateMixed(lesson){
-  const letters = [...lesson.allowed].filter(c => /[a-z;]/.test(c));
-  const fresh = lesson.newLetters.length ? lesson.newLetters : letters;
-  const groups = [];
-  const count = randInt(18,24);
-  for(let i=0;i<count;i++){
-    const len = randInt(2,5); let g = Math.random() < 0.5 ? pick(fresh) : pick(letters);
-    while(g.length < len) g += pick(letters);
-    groups.push(g);
-  }
-  return groups.join(' ');
-}
-
-const wordPoolCache = {};
-function wordPool(lesson){
-  if(lesson.isReview) return lesson.wordDrill || [];
-  if(wordPoolCache[lesson.id]) return wordPoolCache[lesson.id];
-  const own = lesson.wordDrill || [];
-  const fits = w => [...w].every(c => lesson.allowed.has(c));
-  // lessons that teach only digits or symbols keep to their own drill words
-  const usesNew = w => lesson.newLetters.length ? lesson.newLetters.some(c => w.includes(c)) : !lesson.teach;
-  let extra = COMMON_WORDS.filter(w => fits(w) && usesNew(w));
-  if(lesson.shift) extra = extra.map(w => Math.random() < 0.4 ? w[0].toUpperCase()+w.slice(1) : w);
-  const pool = Array.from(new Set(own.concat(extra)));
-  wordPoolCache[lesson.id] = pool;
-  return pool;
-}
-
-/* a run of sentences from the lesson's word pool, punctuated only with keys already taught */
-function generateParagraph(lesson){
-  const pool = wordPool(lesson);
-  const period = lesson.allowed.has('.'), comma = lesson.allowed.has(','), semi = lesson.allowed.has(';');
-  const sentences = [];
-  const count = randInt(4,5);
-  for(let i=0;i<count;i++){
-    const words = []; const len = randInt(4,8);
-    for(let j=0;j<len;j++) words.push(pick(pool));
-    if(comma && len > 5 && Math.random() < 0.5) words[randInt(1,len-3)] += ',';
-    let s = words.join(' ');
-    if(lesson.allowShift) s = s[0].toUpperCase() + s.slice(1);
-    sentences.push(s);
-  }
-  return sentences.join(period ? '. ' : (semi ? '; ' : ' ')) + (period ? '.' : '');
-}
-function pickParagraph(lesson){
-  const written = [lesson.paragraphDrill].concat(lesson.paragraphs || []).filter(Boolean);
-  // before the Shift lesson, freshly generated text joins the hand-written paragraph so every run differs
-  const canGenerate = !lesson.allowShift && wordPool(lesson).length >= 8;
-  const choice = canGenerate ? randInt(0, written.length + 1) : randInt(0, written.length - 1);
-  return choice < written.length ? written[choice] : generateParagraph(lesson);
-}
-/* the timed challenge: one prose paragraph from the Mastery tier at a time (keeps the clock on screen); reaching the end loads another */
-function generateTimedText(){
-  const prose = [];
-  lessons.filter(l => l.tier.startsWith('Mastery')).forEach(l => {
-    [l.paragraphDrill].concat(l.paragraphs || []).forEach(p => { if(p) prose.push(p); });
-  });
-  return pick(prose);
-}
-
+const STEP_LABEL = TC_COURSE.STEP_LABEL;
 function getStagesForLesson(lesson){
   if(lesson.isReview) return (lesson.wordDrill && lesson.wordDrill.length) ? ['character','word'] : ['character'];
-  if(lesson.timed) return ['timed'];
-  // lessons 1-3 have no vowels yet, so there are no real words to type: drill the keys instead
-  if(wordPool(lesson).length < 4) return ['character','mixed'];
-  return ['character','word','paragraph'];
+  if(lesson.isPlacement) return ['timed'];
+  return TC_COURSE.steps(lesson);
 }
-function getStageText(lesson, stageType){
-  if(stageType === 'character') return generateFromTokens(lesson.charDrill);
-  if(stageType === 'mixed') return generateMixed(lesson);
-  if(stageType === 'word') return generateFromPool(wordPool(lesson));
-  if(stageType === 'timed') return generateTimedText();
-  return pickParagraph(lesson);
+function getStageText(lesson, step){
+  if(lesson.isReview) return step === 'word' ? TC_COURSE.gen.generateFromPool(lesson.wordDrill) : TC_COURSE.gen.generateFromTokens(lesson.charDrill);
+  if(lesson.isPlacement) return TC_COURSE.placementText();
+  return TC_COURSE.stepText(lesson, step);
+}
+/* seconds a step lasts when it is timed (0 = untimed) */
+function stepLimit(lesson, step){
+  if(!lesson) return 0;
+  if(lesson.isPlacement) return 120;
+  if(step === 'timed' || step === 'exam') return lesson.timed || 60;
+  if(step === 'sprint') return lesson.timed || 15;
+  if(step === 'challenge') return 30;
+  return 0;
 }
 
 /* ==========================================================================
@@ -274,17 +84,48 @@ let currentStage = 0; let stages = [];
 // backspacing over a correct letter takes it back off, so retyping can't inflate WPM
 let currentIndex=0, totalKeystrokes=0, correctKeystrokes=0, errorCount=0, startTime=null, sampleIntervalHandle=null, clockHandle=null, wpmSamples=[], lessonFinished=false;
 const wpmValueEl=document.getElementById('statWpm'), accValueEl=document.getElementById('statAcc'), errValueEl=document.getElementById('statErr'), timeValueEl=document.getElementById('statTime');
-function timedLimit(){ const l = getLessonById(currentLessonId); return (l && l.timed && stages[currentStage]==='timed') ? l.timed : 0; }
+function timedLimit(){ return stepLimit(getLessonById(currentLessonId), stages[currentStage]); }
+/* per-step snapshot, so each finished step reports its own speed and accuracy */
+let stepStart = null, sprintResults = [], challengeResult = null, uncorrectedTotal = 0;
+function markStepStart(){ stepStart = { t: null, correct: correctKeystrokes, total: totalKeystrokes, errors: errorCount }; }
+function stepStats(){
+  const st = stepStart || { t:startTime, correct:0, total:0, errors:0 };
+  const t0 = st.t || startTime || Date.now();
+  const secs = Math.max(0.001, (Date.now() - t0) / 1000);
+  const correct = correctKeystrokes - st.correct, total = totalKeystrokes - st.total, errors = errorCount - st.errors;
+  const limit = timedLimit();
+  const usedSecs = limit ? Math.min(limit, secs) : secs;
+  return { wpm: Math.min(400, Math.round((correct / 5) / (usedSecs / 60))), accuracy: total ? Math.max(0, Math.round((total - errors) / total * 100)) : 100, errors, seconds: Math.round(usedSecs) };
+}
 function elapsedSeconds(){ return startTime ? (Date.now()-startTime)/1000 : 0; }
 /* the Time keycap: counts up, or down from the limit in the timed challenge (which ends at zero) */
 function updateClock(){
   const limit = timedLimit(), elapsed = elapsedSeconds();
-  timeValueEl.textContent = (limit ? Math.max(0, limit-elapsed) : elapsed).toFixed(1)+'s';
+  const stepElapsed = stepStart && stepStart.t ? (Date.now() - stepStart.t) / 1000 : 0;
+  timeValueEl.textContent = (limit ? Math.max(0, limit-stepElapsed) : elapsed).toFixed(1)+'s';
   if(limit){
     updateCarriage();
-    if(elapsed >= limit && !lessonFinished) finishLesson();
+    const st = stepStart && stepStart.t ? (Date.now() - stepStart.t) / 1000 : elapsed;
+    if(st >= limit && !lessonFinished) stepTimeUp();
   }
 }
+/* a timed step ran out: sprints repeat, a Challenge in the middle moves on, the last step finishes the lesson */
+function stepTimeUp(){
+  const step = stages[currentStage];
+  if(step === 'sprint'){
+    const r = stepStats(); sprintResults.push(r);
+    const lesson = getLessonById(currentLessonId);
+    if(sprintResults.length < (lesson.sprints || 5)){
+      stopTimers(); startTime = null; currentIndex = 0;
+      correctKeystrokes = totalKeystrokes = errorCount = 0;
+      showStepNote(`Sprint ${sprintResults.length} done: ${r.wpm} wpm at ${r.accuracy}%. Sprint ${sprintResults.length+1} of ${lesson.sprints || 5} starts when you type.`);
+      loadStage(); return;
+    }
+    return finishLesson();
+  }
+  finishStep();
+}
+function showStepNote(text){ const n=document.getElementById('stepNote'); n.textContent=text||''; n.hidden=!text; }
 
 function currentWpm(){ if(!startTime) return 0; const m=(Date.now()-startTime)/60000; return m<=0?0:Math.round((correctKeystrokes/5)/m); }
 function currentAccuracy(){ if(totalKeystrokes===0) return 100; return Math.max(0, Math.round(((totalKeystrokes-errorCount)/totalKeystrokes)*100)); }
@@ -333,14 +174,15 @@ function updateFingerGuide(){
 function updateCarriage(){
   const railEl = document.querySelector('.rail'); const carriageEl = document.getElementById('carriage');
   const limit = timedLimit();
-  const pct = limit ? Math.min(1, elapsedSeconds()/limit) : (letters.length ? Math.min(1, currentIndex/letters.length) : 0);
+  const stepElapsed = stepStart && stepStart.t ? (Date.now() - stepStart.t) / 1000 : 0;
+  const pct = limit ? Math.min(1, stepElapsed/limit) : (letters.length ? Math.min(1, currentIndex/letters.length) : 0);
   const railWidth = railEl.clientWidth - 26;
   carriageEl.style.left = (pct*railWidth)+'px';
 }
 
 function renderStageRow(){
   const row = document.getElementById('stageRow');
-  const labels = {character:'Characters', mixed:'Mixed', word:'Words', paragraph:'Paragraph', timed:'60-second test'};
+  const labels = Object.assign({}, STEP_LABEL, { timed: (getLessonById(currentLessonId)||{}).isPlacement ? '2-minute placement test' : STEP_LABEL.timed });
   row.innerHTML = stages.map((s,i)=>{
     const cls = i===currentStage ? 'current' : (i<currentStage ? 'done' : '');
     return `<span class="stage-pill ${cls}" data-stage-index="${i}" style="cursor:pointer;">${i+1}. ${labels[s]}</span>`;
@@ -355,15 +197,55 @@ function renderStageRow(){
   });
 }
 
+let watchTimer = null, bossHandle = null;
 function loadStage(){
   flushPendingSkip();
   const lesson = getLessonById(currentLessonId);
-  exerciseText = getStageText(lesson, stages[currentStage]);
+  const step = stages[currentStage];
+  clearInterval(watchTimer);
+  document.getElementById('watchPanel').hidden = step !== 'watch';
+  document.getElementById('bossMount').hidden = step !== 'boss';
+  lessonView.classList.toggle('mode-watch', step === 'watch');
+  lessonView.classList.toggle('mode-boss', step === 'boss');
+  if(bossHandle && step !== 'boss'){ bossHandle.destroy(); bossHandle = null; }
+  if(step === 'watch') return startWatch(lesson);
+  if(step === 'boss') return startBoss(lesson);
+  exerciseText = getStageText(lesson, step);
   renderText(exerciseText);
   currentIndex = 0;
+  markStepStart();
   updateCaretPosition(); updateCarriage(); updateFingerGuide(); renderStageRow();
+  if(!lesson.isReview && !lesson.isPlacement) notePosition(currentLessonId, currentStage);
+}
+/* Watch: about five seconds, not scored, with Skip — which finger presses each new key */
+function startWatch(lesson){
+  renderStageRow();
+  const w = lesson.watch || { keys: lesson.keys || [], note: '' };
+  const keys = (w.keys || []).filter(k => typeof k === 'string' && k.length === 1);
+  document.getElementById('watchKeys').innerHTML = keys.length ? keys.map(k => {
+    const t = shiftMap[k] || k.toLowerCase(); const f = FINGER_MAP[t] || 'thumb';
+    return `<div class="watch-key"><kbd>${k === ' ' ? 'space' : esc(k)}</kbd><span>${FINGER_LABEL[f]}${(k !== k.toLowerCase() || shiftMap[k]) ? ' + Shift' : ''}</span></div>`;
+  }).join('') : `<div class="watch-key wide"><kbd>${esc(lesson.title)}</kbd></div>`;
+  document.getElementById('watchNote').textContent = w.note || '';
+  const bar = document.getElementById('watchBar'); const t0 = Date.now();
+  bar.style.width = '0%';
+  watchTimer = setInterval(() => { const p = Math.min(1, (Date.now()-t0)/5000); bar.style.width = (p*100)+'%'; if(p >= 1) endWatch(); }, 100);
   if(!lesson.isReview) notePosition(currentLessonId, currentStage);
 }
+function endWatch(){ clearInterval(watchTimer); if(stages[currentStage] !== 'watch') return; currentStage++; resetStepOnly(); loadStage(); }
+document.getElementById('watchSkip').addEventListener('click', endWatch);
+/* the boss fight runs the arcade's boss engine inside the lesson */
+function startBoss(lesson){
+  renderStageRow();
+  const el = document.getElementById('bossMount'); el.innerHTML = '';
+  const b = TC_COURSE.bossWords(lesson);
+  bossHandle = TC_GAMES.get('boss').mount(el, Object.assign(arcadeCtx('boss'), {
+    bossLesson: { id: lesson.id, title: lesson.title, words: b },
+    onEnd: (r) => finishBoss(lesson, r || {}),
+    onBack: backToDashboard,
+  }));
+}
+function resetStepOnly(){ stopTimers(); startTime = null; showStepNote(''); }
 
 /* ---- keyboard adjacency map, for classifying "adjacent key" errors ---- */
 const KEY_ROWS = ["1234567890","qwertyuiop","asdfghjkl;","zxcvbnm,./"];
@@ -440,7 +322,7 @@ function loadAnalytics(){
 /* keys meant for something else: Ctrl/Cmd/Alt shortcuts (AltGr, which Windows reports as
    Ctrl+Alt, still types), and anything typed while the feedback box or another field is in use */
 function isShortcut(e){ return e.metaKey || (e.ctrlKey && !e.altKey) || (e.altKey && !e.ctrlKey); }
-const CAPTURE_IDS = new Set(['typer','metroTyper','towTyper']);
+const CAPTURE_IDS = new Set(['typer']);
 function typingElsewhere(e){
   for(const id of ['feedbackModal','authModal','importModal']) if(!document.getElementById(id).classList.contains('hidden')) return true;
   const t = e.target;
@@ -453,6 +335,8 @@ function handleKeydown(e){
   const lessonOpen = lessonView.style.display !== 'none';
   if(!lessonOpen || typingElsewhere(e) || isShortcut(e)) return;
   if(e.key === 'Tab'){ e.preventDefault(); resetLesson(); return; }
+  if(stages[currentStage] === 'boss') return;                       // the boss game has its own keys
+  if(stages[currentStage] === 'watch'){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); endWatch(); } return; }
 
   if(document.activeElement !== typer){
     typer.focus();
@@ -479,7 +363,7 @@ function handleKeydown(e){
 
   const inputChar = (e.key==='Enter') ? '\n' : e.key;
   const expectedChar = exerciseText[currentIndex];
-  startTimerIfNeeded(); totalKeystrokes++;
+  startTimerIfNeeded(); if(stepStart && !stepStart.t) stepStart.t = Date.now(); totalKeystrokes++;
 
   const isCorrect = (inputChar === expectedChar);
   recordKeyResult(expectedChar, isCorrect);
@@ -493,14 +377,16 @@ function handleKeydown(e){
   lastKeyTime = now; lastExpectedChar = expectedChar; lastKeystrokeWasCorrect = isCorrect;
 
   if(isCorrect){ letters[currentIndex].className='letter correct'; correctKeystrokes++; playSound('correct'); }
-  else{ letters[currentIndex].className='letter incorrect'; errorCount++; playSound('incorrect'); }
+  else{
+    letters[currentIndex].className='letter incorrect'; errorCount++; playSound('incorrect');
+    if(stages[currentStage] === 'lock'){ lockBack(); return; }
+  }
 
   currentIndex++; updateCaretPosition(); updateStatsDisplay(); updateCarriage(); updateFingerGuide();
 
   if(currentIndex === letters.length){
-    if(timedLimit()){ loadStage(); }   // timed challenge: the clock ends it, so finishing the text just brings more
-    else if(currentStage < stages.length - 1){ currentStage++; loadStage(); }
-    else{ finishLesson(); }
+    if(timedLimit()){ countUncorrected(); const keep = stepStart; loadStage(); stepStart = keep; }   // timed: the clock ends it, so finishing the text brings more
+    else finishStep();
   }
 }
 document.addEventListener('keydown', handleKeydown);
@@ -765,55 +651,81 @@ function dotGlyphs(n){ let s=''; for(let i=0;i<3;i++) s += i<n ? '●' : '<span 
 
 function renderTierFilter(){
   const bar = document.getElementById('tierFilter');
-  const items = [{key:'all', label:'all lessons'}].concat(TIER_ORDER.map(t => ({key:t, label:tierShortLabel(t)})));
+  const items = [{key:'all', label:'all levels'}].concat(LEVELS.map(l => ({key:l.name, label:l.name.toLowerCase()})));
   bar.innerHTML = items.map((it,i) =>
     `${i===1 ? '<span class="config-sep"></span>' : ''}<button class="config-item${activeTier===it.key?' active':''}" data-tier="${it.key}">${it.label}</button>`
   ).join('');
   bar.querySelectorAll('.config-item').forEach(b => b.addEventListener('click', () => {
-    activeTier = b.dataset.tier; renderTierFilter(); renderDashboard();
+    activeTier = b.dataset.tier; renderTierFilter(); renderDashboard(); renderCourseMap();
   }));
 }
 
 function renderHomeStats(){
-  // a lesson only opened (signed in, the server records that) doesn't count as attempted
+  const v = Progress.view, t = v ? v.totals : null;
   const entries = Object.values(progress).filter(p => !p.status || p.attempts > 0 || p.status === 'completed');
-  const started = entries.length;
-  const starsEarned = entries.reduce((s,p) => s + (p.stars||0), 0);
-  const bestWpm = entries.reduce((m,p) => Math.max(m, p.bestWpm||0), 0);
-  const accs = entries.map(p => p.bestAcc||0).filter(Boolean);
-  const avgAcc = accs.length ? Math.round(accs.reduce((a,b)=>a+b,0)/accs.length) : 0;
+  const done = t ? t.lessonsDone : entries.filter(p => p.stars > 0).length;
+  const starsEarned = t ? t.stars : entries.reduce((s,p) => s + (p.stars||0), 0);
+  const bestWpm = t ? t.bestWpm : entries.reduce((m,p) => Math.max(m, p.bestWpm||0), 0);
+  const avgAcc = t ? Math.round(t.avgAccuracy) : 0;
   const stat = (label,value,sub) => `<div class="hstat"><div class="hs-label">${label}</div><div class="hs-value">${value}</div><div class="hs-sub">${sub}</div></div>`;
   document.getElementById('homeStats').innerHTML =
-    stat('lessons', `${started}<span style="font-size:15px;color:var(--sub)">/${lessons.length}</span>`, 'attempted') +
-    stat('stars', `${starsEarned}<span style="font-size:15px;color:var(--sub)">/${lessons.length*3}</span>`, 'accuracy rating') +
-    stat('best wpm', bestWpm || '—', 'personal record') +
-    stat('avg accuracy', avgAcc ? avgAcc+'%' : '—', 'across lessons');
+    stat('lessons done', `${done}<span style="font-size:15px;color:var(--sub)">/${lessons.length}</span>`, 'completed') +
+    stat('stars', `${starsEarned}<span style="font-size:15px;color:var(--sub)">/${lessons.length*3}</span>`, (t && t.crowns ? t.crowns + ' crowns' : 'accuracy rating')) +
+    stat('best speed', bestWpm ? bestWpm + '<span style="font-size:15px;color:var(--sub)"> wpm</span>' : '—', 'personal record') +
+    stat('avg accuracy', avgAcc ? avgAcc+'%' : '—', 'across runs');
+}
+
+/* the course map: five levels as one route, each a glowing keycap marker on a path that draws itself as you progress */
+function renderCourseMap(){
+  const el = document.getElementById('courseMap'); if(!el) return;
+  const W = 1000, H = 120, xs = [70, 290, 500, 710, 930], ys = [70, 40, 78, 38, 70];
+  const pct = l => { const ls = lessons.filter(x => x.level === l.n); return ls.filter(x => lessonDone(x.id)).length / ls.length; };
+  const total = lessons.filter(x => lessonDone(x.id)).length / lessons.length;
+  let d = `M${xs[0]} ${ys[0]}`; for(let i=1;i<5;i++){ const cx = (xs[i-1]+xs[i])/2; d += ` C${cx} ${ys[i-1]} ${cx} ${ys[i]} ${xs[i]} ${ys[i]}`; }
+  const next = nextLessonInfo();
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path class="route-bg" d="${d}"/><path class="route-fg" d="${d}" pathLength="100" style="stroke-dashoffset:${(100 - total*100).toFixed(1)}"/></svg>` +
+    LEVELS.map((L,i) => `<button class="route-node${activeTier===L.name?' active':''}${next && next.lesson.level===L.n?' next':''}" style="left:${(xs[i]/W*100).toFixed(1)}%;top:${(ys[i]/H*100).toFixed(1)}%" data-level="${esc(L.name)}" title="${esc(L.name)}: ${Math.round(pct(L)*100)}% done">
+      <b>${L.n}</b><span>${esc(L.name)}</span><small>${Math.round(pct(L)*100)}%</small></button>`).join('');
+  el.querySelectorAll('.route-node').forEach(b => b.addEventListener('click', () => { activeTier = activeTier === b.dataset.level ? 'all' : b.dataset.level; renderTierFilter(); renderDashboard(); renderCourseMap(); }));
 }
 
 function renderDashboard(){
   cardDashboard.innerHTML = '';
-  const tiers = TIER_ORDER.filter(t => activeTier === 'all' || t === activeTier);
-  tiers.forEach(tier => {
-    const accent = TIER_ACCENT[tier] || 'var(--accent)';
-    const tierLessons = lessons.filter(l => l.tier === tier);
-    const cleared = tierLessons.filter(l => progress[l.id] && progress[l.id].stars > 0).length;
+  const next = nextLessonInfo();
+  LEVELS.filter(L => activeTier === 'all' || L.name === activeTier).forEach(L => {
+    const accent = LEVEL_ACCENT[L.n];
+    const levelLessons = lessons.filter(l => l.level === L.n);
+    const cleared = levelLessons.filter(l => lessonDone(l.id)).length;
     const block = document.createElement('div'); block.className='tier-block';
-    block.innerHTML = `<div class="tier-head"><div class="tier-dot" style="background:${accent}"></div><div class="tier-title">${tier}</div><div class="tier-meta">${cleared}/${tierLessons.length}</div></div>`;
+    block.innerHTML = `<div class="tier-head"><div class="tier-dot" style="background:${accent}"></div><div class="tier-title">Level ${L.n} · ${esc(L.name)} <span class="tier-sub">${esc(L.sub)}</span></div><div class="tier-meta">${cleared}/${levelLessons.length} · target ${L.target} wpm</div></div>`;
     const grid = document.createElement('div'); grid.className='card-grid';
-    tierLessons.forEach(l=>{
+    levelLessons.forEach(l=>{
       const p = progress[l.id]; const stars = p?p.stars:0;
-      const card = document.createElement('div'); card.className='lesson-card';
+      const card = document.createElement('button'); card.type='button';
+      card.className='lesson-card' + (l.kind === 'boss' ? ' boss' : '') + (next && next.lesson === l ? ' recommended' : '');
       card.style.setProperty('--tier-accent', accent);
-      const best = p && p.bestWpm ? `${p.bestWpm} wpm` : 'L'+lessonNumber(l);
-      const state = (p && p.status === 'in_progress') ? '<div class="lstate">in progress</div>' : '';
-      card.innerHTML = `<div class="lnum">${best}</div><div class="ltitle">${l.title}</div>${state}<div class="lstars">${dotGlyphs(stars)}</div>`;
+      const best = p && p.bestWpm ? `${p.bestWpm} wpm` : (l.kind === 'boss' ? 'Boss' : '');
+      const state = (p && p.status === 'in_progress') ? '<div class="lstate">in progress</div>' : (next && next.lesson === l ? '<div class="lstate">next</div>' : '');
+      card.innerHTML = `<div class="lnum">L${lessonNumber(l)}${best ? ' · ' + best : ''}</div><div class="ltitle">${esc(l.title)}</div>${state}<div class="lstars">${dotGlyphs(stars)}${p && p.crown ? '<span class="lcrown" title="Crown">♛</span>' : ''}</div>`;
       card.addEventListener('click', () => openLesson(l.id));
       grid.appendChild(card);
     });
     block.appendChild(grid); cardDashboard.appendChild(block);
   });
 }
-function renderHome(){ renderTierFilter(); renderHomeStats(); renderContinuePanel(); renderDashboard(); renderReviewPanel(); renderCoachPanel(); }
+function renderPlacementOffer(){
+  const el = document.getElementById('placementOffer');
+  let placed = null; try{ placed = JSON.parse(localStorage.getItem(PLACEMENT_KEY) || 'null'); }catch(e){}
+  const dismissed = (() => { try{ return localStorage.getItem('typingMasterPlacementDismissed') === '1'; }catch(e){ return false; } })();
+  const fresh = !Object.keys(progress).length && !(Progress.view && Progress.view.placement);
+  if(!fresh || placed || dismissed){ el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<div class="review-info"><div class="review-title">new here?</div><div class="coach-message"><b>Take a 2-minute placement test</b> and we'll suggest where to start. Or skip it and begin at lesson 1.</div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" id="placementGo">Take the test</button><button class="btn secondary" id="placementSkip">Skip</button></div>`;
+  document.getElementById('placementGo').addEventListener('click', openPlacement);
+  document.getElementById('placementSkip').addEventListener('click', () => { try{ localStorage.setItem('typingMasterPlacementDismissed','1'); }catch(e){} el.hidden = true; });
+}
+function renderHome(){ renderTierFilter(); renderHomeStats(); renderPlacementOffer(); renderContinuePanel(); renderRewardBits(); renderCourseMap(); renderDashboard(); renderReviewPanel(); renderCoachPanel(); }
 
 function openLesson(lessonId, startStage){
   hideExtraViews(); setNavCurrent('homeView'); closeThemeMenu();
@@ -835,12 +747,7 @@ function backToDashboard(){
   lessonView.style.display='none'; resultsView.classList.add('hidden');
   document.getElementById('accountView').style.display='none';
   document.getElementById('funSelectView').style.display='none';
-  document.getElementById('spaceInvadersView').style.display='none';
-  document.getElementById('metronomeView').style.display='none';
-  document.getElementById('tugOfWarView').style.display='none';
-  document.getElementById('metroResultsOverlay').classList.add('hidden');
-  document.getElementById('towResultsOverlay').classList.add('hidden');
-  siStop(); metStop(); towStop();
+  stopArcade();
   homeView.style.display='flex';
   stopTimers();
   saveKeyStats();
@@ -851,17 +758,33 @@ function openFunMode(){
   hideExtraViews(); setNavCurrent('funSelectView'); closeThemeMenu();
   homeView.style.display='none';
   document.getElementById('accountView').style.display='none';
-  document.getElementById('metroResultsOverlay').classList.add('hidden');
-  document.getElementById('towResultsOverlay').classList.add('hidden');
   lessonView.style.display='none'; resultsView.classList.add('hidden');
-  document.getElementById('spaceInvadersView').style.display='none';
-  document.getElementById('metronomeView').style.display='none';
-  document.getElementById('tugOfWarView').style.display='none';
+  stopArcade(); renderArcade();
   document.getElementById('funSelectView').style.display='flex';
+}
+/* Accuracy lock: one mistake sends the learner back to the start of the line on screen */
+function lockBack(){
+  const top = letters[currentIndex].offsetTop;
+  let start = currentIndex;
+  while(start > 0 && letters[start-1].offsetTop === top) start--;
+  for(let i = start; i <= currentIndex && i < letters.length; i++){ if(letters[i].classList.contains('correct')) correctKeystrokes--; letters[i].className = 'letter default'; }
+  currentIndex = start; updateCaretPosition(); updateStatsDisplay(); updateFingerGuide();
+  showStepNote('Accuracy lock: a mistake sends you back to the start of the line.');
+}
+function countUncorrected(){ uncorrectedTotal += letters.filter(l => l.classList.contains('incorrect')).length; }
+/* one step done: report it, then go on to the next step or finish the lesson */
+function finishStep(){
+  const lesson = getLessonById(currentLessonId), step = stages[currentStage];
+  const st = stepStats();
+  if(step === 'challenge') challengeResult = st;
+  if(!lesson.isReview && !lesson.isPlacement && step !== 'watch') emitEvent({ type:'step', lessonId:lesson.id, step:currentStage, kind:step, wpm:st.wpm, accuracy:st.accuracy, errors:st.errors, seconds:st.seconds });
+  if(currentStage < stages.length - 1){ currentStage++; stopTimers(); startTime = null; showStepNote(''); loadStage(); }
+  else finishLesson();
 }
 function resetLessonState(){
   stopTimers(); pendingSkip = null; lastKeyTime = null; lastExpectedChar = null; lastKeystrokeWasCorrect = true;
   currentIndex=0; totalKeystrokes=0; correctKeystrokes=0; errorCount=0; startTime=null; wpmSamples=[]; lessonFinished=false;
+  sprintResults=[]; challengeResult=null; uncorrectedTotal=0; stepStart=null; showStepNote('');
   updateStatsDisplay(); updateClock(); paper.style.opacity='1'; startHint.style.display='flex'; paper.classList.remove('focused');
   typer.value='';
 }
@@ -869,396 +792,178 @@ function resetLesson(){
   // the results card is a fixed overlay — it must be dismissed here, or Retry /
   // Tab restarts the lesson underneath a still-visible scrim
   resultsView.classList.add('hidden');
+  if(bossHandle){ bossHandle.destroy(); bossHandle = null; }
   currentStage=0; resetLessonState(); loadStage();
   typer.focus();
 }
 
 function finishLesson(){
   lessonFinished = true; stopTimers(); flushPendingSkip();
-  const finalWpm = currentWpm(); const finalAcc = currentAccuracy();
+  const lesson = getLessonById(currentLessonId);
+  const step = stages[currentStage];
+  let finalWpm = currentWpm(), finalAcc = currentAccuracy();
   const limit = timedLimit();
-  const elapsedSec = startTime ? Math.round(limit ? Math.min(limit, elapsedSeconds()) : elapsedSeconds()) : 0;
+  let elapsedSec = startTime ? Math.round(limit && stages.length === 1 ? Math.min(limit, elapsedSeconds()) : elapsedSeconds()) : 0;
+  if(step === 'sprint' && sprintResults.length){
+    const best = sprintResults.slice().sort((a,b) => b.wpm - a.wpm)[0];   // five sprints, the best one counts
+    finalWpm = best.wpm; finalAcc = best.accuracy; elapsedSec = sprintResults.reduce((s,r) => s + r.seconds, 0);
+  }
+  if(limit && stages.length === 1){ const st = stepStats(); finalWpm = st.wpm; finalAcc = st.accuracy; elapsedSec = st.seconds; }
+  finalWpm = Math.min(400, finalWpm);
   updateClock();
   wpmSamples.push({t: elapsedSec, wpm: finalWpm});
-
-  let stars = 0;
-  if(finalAcc>=98) stars=3; else if(finalAcc>=92) stars=2; else if(finalAcc>=80) stars=1;
-  if(!getLessonById(currentLessonId).isReview){
-    const prev = progress[currentLessonId];
-    const entry = { stars: Math.max(stars, prev?prev.stars:0), bestWpm: Math.max(finalWpm, prev?prev.bestWpm:0), bestAcc: Math.max(finalAcc, prev?prev.bestAcc:0) };
-    if(Account.user){
-      // completed = every stage finished with at least 80% accuracy (1 star); it never goes back
-      entry.status = (entry.stars >= 1) ? 'completed' : 'in_progress';
-      entry.attempts = ((prev && prev.attempts) || 0) + 1; entry.stage = 0;
-      Sync.complete({ lessonId:currentLessonId, stars, wpm:Math.min(finalWpm, 400), accuracy:finalAcc, errors:Math.min(errorCount, 100000), seconds:Math.min(elapsedSec, 36000) });
-    }
-    progress[currentLessonId] = entry;
-    saveProgress();
-  }
   saveKeyStats();
 
-  document.getElementById('finalWpm').textContent = finalWpm;
-  document.getElementById('finalAcc').textContent = finalAcc+'%';
-  document.getElementById('finalErr').textContent = errorCount;
-  document.getElementById('finalTime').textContent = elapsedSec+'s';
-  document.getElementById('resultsStars').innerHTML = starGlyphs(stars);
+  if(lesson.isPlacement) return finishPlacement(finalWpm, finalAcc, elapsedSec);
+
+  const stars = TC_META.starsFor(finalAcc);
+  const target = levelOf(lesson).target;
+  const crown = !!challengeResult && challengeResult.wpm >= target && challengeResult.accuracy >= TC_META.CROWN_ACCURACY;
+  let earned = { xp:0, badges:[], xpBefore:(Progress.view && Progress.view.xp) || 0 };
+  let extra = null;
+  if(lesson.exam){
+    // exam rules: gross speed, net speed (one word a minute off per uncorrected error a minute), key depressions per hour
+    countUncorrected();
+    const mins = Math.max(elapsedSec, 1) / 60;
+    const gross = Math.round((totalKeystrokes / 5) / mins);
+    const net = Math.max(0, Math.round(gross - uncorrectedTotal / mins));
+    extra = { gross, net, kdph: Math.round(totalKeystrokes / (Math.max(elapsedSec,1) / 3600)) };
+  }
+  if(!lesson.isReview){
+    const prev = progress[currentLessonId];
+    const entry = Object.assign({}, prev || {}, { stars: Math.max(stars, prev?prev.stars:0), bestWpm: Math.max(finalWpm, prev?prev.bestWpm:0), bestAcc: Math.max(finalAcc, prev?prev.bestAcc:0) });
+    if(crown || (prev && prev.crown)) entry.crown = 1;
+    entry.status = (entry.stars >= 1 || (prev && prev.status === 'completed')) ? 'completed' : 'in_progress';
+    entry.attempts = ((prev && prev.attempts) || 0) + 1; entry.stage = 0;
+    progress[currentLessonId] = entry;
+    saveProgress();
+    earned = emitEvent({ type:'run', lessonId:lesson.id, step:Math.max(0, stages.length-1), kind:step, wpm:finalWpm, accuracy:finalAcc, errors:Math.min(errorCount,100000),
+      seconds:Math.max(1, Math.min(elapsedSec, 7200)), stars, crown, data: challengeResult ? { challenge:{ wpm:challengeResult.wpm, accuracy:challengeResult.accuracy } } : {} });
+  } else {
+    emitEvent({ type:'quest', data:{ action:'drill' } });   // the problem-keys drill counts for its daily quest
+  }
   recordStreak();
-  paper.style.opacity='0'; resultsView.classList.remove('hidden');
-  drawWpmGraph(wpmSamples, finalAcc);
+  paper.style.opacity='0';
+  showResults({ title: lesson.isReview ? 'Drill complete' : null, stars: lesson.isReview ? 0 : stars, crown, wpm:finalWpm, accuracy:finalAcc, errors:errorCount, seconds:elapsedSec,
+    samples:wpmSamples, earned, extra, nextLabel: nextLessonAfter(lesson) ? 'Next lesson' : null });
+}
+/* the boss fight finished inside the lesson */
+function finishBoss(lesson, r){
+  const won = !!r.won, acc = Math.round(r.accuracy || 0), wpm = Math.min(400, Math.round(r.wpm || (r.stats && r.stats.wpm) || 0));
+  const stars = won ? TC_META.starsFor(acc) : 0;
+  const prev = progress[lesson.id];
+  if(won){ progress[lesson.id] = Object.assign({}, prev || {}, { stars: Math.max(stars, prev?prev.stars:0), bestWpm: Math.max(wpm, prev?prev.bestWpm||0:0), bestAcc: Math.max(acc, prev?prev.bestAcc||0:0), status:'completed', attempts:((prev&&prev.attempts)||0)+1 }); saveProgress(); }
+  const earned = emitEvent({ type:'run', lessonId:lesson.id, kind:'boss', wpm, accuracy:acc, errors:r.errors||0, seconds:Math.max(1, Math.round(r.seconds || (r.stats && r.stats.seconds) || 1)), stars, data:{ won, hearts:r.hearts } });
+  recordStreak();
+  if(bossHandle){ bossHandle.destroy(); bossHandle = null; }
+  showResults({ title: won ? 'Boss beaten' : 'The boss escaped', stars, crown:false, wpm, accuracy:acc, errors:r.errors||0, seconds:Math.round(r.seconds||0), samples:[], earned, nextLabel: won && nextLessonAfter(lesson) ? 'Next lesson' : null });
+}
+function nextLessonAfter(lesson){ const i = lessons.indexOf(lesson); return i >= 0 && i < lessons.length - 1 ? lessons[i+1] : null; }
+let lastResultsLesson = null;
+function showResults(d){
+  lastResultsLesson = getLessonById(currentLessonId);
+  const body = document.getElementById('resultsBody');
+  let html = TC_REWARDS_UI.resultsCard({ title:d.title, stars:d.stars, crown:d.crown, wpm:d.wpm, accuracy:d.accuracy, errors:d.errors, seconds:d.seconds,
+    samples:(d.samples||[]).map(s => ({ t:s.t, wpm:s.wpm })), xpBefore:d.earned ? d.earned.xpBefore : 0, xpGained:d.earned ? d.earned.xp : 0,
+    newBadges:(d.earned && d.earned.badges) || [], nextLabel:d.nextLabel, defs:TC_RULES.BADGES });
+  if(d.extra) html = html.replace('</article>', `<p class="exam-line">Gross <b>${d.extra.gross}</b> wpm · Net <b>${d.extra.net}</b> wpm · ${d.extra.kdph.toLocaleString()} key depressions per hour</p></article>`);
+  if(d.placement) html = d.placement;
+  body.innerHTML = html;
+  TC_REWARDS_UI.enhance(body);
+  resultsView.classList.remove('hidden');
+  if(d.earned && d.earned.rankUp && Settings.effects !== 'off') document.body.insertAdjacentHTML('beforeend', TC_REWARDS_UI.rankUpCelebration({ name:d.earned.rankUp }));
+}
+document.getElementById('resultsBody').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-action]'); if(!b) return;
+  const a = b.getAttribute('data-action');
+  if(a === 'retry') resetLesson();
+  else if(a === 'map') backToDashboard();
+  else if(a === 'next'){ const n = lastResultsLesson && nextLessonAfter(lastResultsLesson); if(n) openLesson(n.id); else backToDashboard(); }
+  else if(a === 'level'){ backToDashboard(); activeTier = b.getAttribute('data-level'); renderHome(); }
+});
+document.addEventListener('click', (e) => { const o = e.target.closest('.rw-rankup'); if(o && (e.target.closest('[data-action="close"]') || e.target === o)) o.remove(); });
+/* Enter = next lesson on the Results screen (Tab = retry is handled by the lesson key handler) */
+document.addEventListener('keydown', (e) => {
+  if(e.key !== 'Enter' || resultsView.classList.contains('hidden') || typingElsewhere(e)) return;
+  e.preventDefault(); const n = resultsView.querySelector('[data-action="next"]') || resultsView.querySelector('[data-action="map"]'); if(n) n.click();
+});
+
+/* ---- placement test: a 2-minute run that suggests where to start ---- */
+function openPlacement(){
+  specialLesson = { id:'placement', isPlacement:true, title:'Placement test', tier:'Two minutes · find your level', keys:[], level:1 };
+  openLesson('placement');
+}
+function finishPlacement(wpm, acc, secs){
+  const level = TC_RULES.placementLevel(wpm, acc);
+  try{ localStorage.setItem(PLACEMENT_KEY, JSON.stringify({ level, wpm, accuracy:acc, at:new Date().toISOString() })); }catch(e){}
+  emitEvent({ type:'placement', wpm, accuracy:acc, seconds:Math.max(1, secs) });
+  const L = LEVELS.find(l => l.n === level);
+  showResults({ placement: `<article class="results-card rw-card placement-card"><p class="eyebrow">Placement test</p><h2>Start at Level ${level}: ${esc(L.name)}</h2>
+    <p class="lede">You typed <b>${wpm} wpm</b> at <b>${acc}%</b> accuracy. This is only a suggestion: every lesson stays open.</p>
+    <div class="results-actions"><button class="btn primary" data-action="level" data-level="${esc(L.name)}">Show Level ${level}</button><button class="btn secondary" data-action="map">Back to the course</button></div></article>` });
 }
 
 /* ==========================================================================
-   9. FUN MODE — Space Invaders
-   Words fall like ships; typing the full word destroys it. Long words spawn
-   as multi-hit "boss" ships. Short words are fast, low-health "scouts".
+   9–11. ARCADE — eight games (js/games/*.js) and the Daily Challenge
+   Every game uses only the keys of the furthest lesson completed (with no
+   progress, the home row) and reports its score as a 'game' event.
    ========================================================================== */
-const SI = { canvas:null, ctx:null, running:false, ships:[], score:0, lives:3, buffer:'', spawnTimer:0, spawnInterval:1800, animHandle:null, lastTs:0 };
-let SI_SHORT_WORDS = [], SI_LONG_WORDS = [];
-
-function siGatherWords(){
-  const set = new Set();
-  lessons.forEach(l => { if(Array.isArray(l.wordDrill)) l.wordDrill.forEach(w => { if(/^[a-zA-Z]+$/.test(w)) set.add(w.toLowerCase()); }); });
-  const all = Array.from(set);
-  SI_SHORT_WORDS = all.filter(w => w.length <= 4);
-  SI_LONG_WORDS = all.filter(w => w.length >= 6);
-  if(SI_SHORT_WORDS.length === 0) SI_SHORT_WORDS = ['cat','dog','sun','run','fox','pit','ask'];
-  if(SI_LONG_WORDS.length === 0) SI_LONG_WORDS = ['keyboard','practice','accuracy','fluency'];
+let arcadeHandle = null, arcadeGame = null;
+function furthestCompleted(){
+  let last = null;
+  for(const l of lessons){ const p = progress[l.id]; if(p && (p.status ? p.status === 'completed' : p.stars > 0)) last = l.id; }
+  return last;
 }
-function siSpawnShip(){
-  const isBoss = Math.random() < 0.16;
-  const word = isBoss ? SI_LONG_WORDS[randInt(0,SI_LONG_WORDS.length-1)] : SI_SHORT_WORDS[randInt(0,SI_SHORT_WORDS.length-1)];
-  SI.ships.push({ word, x: randInt(60, SI.canvas.width-60), y:-30, speed: isBoss?16:38, isBoss, hp: isBoss?3:1, maxHp: isBoss?3:1, hitFlash:0 });
+function readGhosts(){ try{ return JSON.parse(localStorage.getItem(GHOST_KEY) || '{}'); }catch(e){ return {}; } }
+function arcadeCtx(id){
+  const allowed = TC_COURSE.allowedThrough(furthestCompleted() || 'l6');
+  const chars = Array.from(allowed.chars).filter(c => c !== ' ').join('');
+  const g = Progress.view && Progress.view.games && Progress.view.games[id];
+  const bosses = lessons.filter(l => l.kind === 'boss' && progress[l.id]).map(l => ({ id:l.id, title:l.title, words:TC_COURSE.bossWords(l) }));
+  return {
+    words: allowed.words.length ? allowed.words : chars.split(''), chars, digits: /\d/.test(chars), symbols: chars.replace(/[a-z0-9;,./]/gi, ''),
+    best: g ? g.best : null, effects: Settings.effects, bosses,
+    sound: (name) => playSound(name === 'error' || name === 'lose' ? 'incorrect' : 'correct'),
+    loadGhost: (key) => readGhosts()[key] || null,
+    saveGhost: (key, obj) => { const all = readGhosts(); all[key] = obj; try{ localStorage.setItem(GHOST_KEY, JSON.stringify(all)); }catch(e){} },
+    onBack: openFunMode,
+    onEnd: (r) => {
+      r = r || {}; const st = r.stats || {};
+      const earned = emitEvent({ type:'game', gameId:id, score:Math.max(0, Math.round(r.score || 0)), xp:Math.min(TC_RULES.XP.gameMax, Math.max(0, Math.round(r.xp || 0))),
+        wpm:Math.min(400, Math.round(st.wpm || 0)), accuracy:Math.min(100, Math.round(st.accuracy || 0)), seconds:Math.round(st.seconds || 0), data:Object.assign({}, st, { won:r.won }) });
+      if(earned.badges && earned.badges.length) toast('Badge earned: ' + earned.badges.map(badgeName).join(', '));
+    },
+  };
 }
-function siStart(){
-  siGatherWords();
-  SI.canvas = document.getElementById('siCanvas'); SI.ctx = SI.canvas.getContext('2d');
-  SI.ships=[]; SI.score=0; SI.lives=3; SI.buffer=''; SI.spawnTimer=0; SI.spawnInterval=1800; SI.running=true; SI.lastTs=performance.now();
-  siUpdateHud();
-  document.getElementById('siGameOver').classList.add('hidden');
-  cancelAnimationFrame(SI.animHandle);
-  SI.animHandle = requestAnimationFrame(siLoop);
+function siStop(){} function metStop(){} function towStop(){}   // the old games are replaced by js/games
+function stopArcade(){ if(arcadeHandle){ arcadeHandle.destroy(); arcadeHandle = null; } arcadeGame = null; document.getElementById('arcadePlay').style.display = 'none'; }
+function renderArcade(){
+  const best = (Progress.view && Progress.view.games) || {};
+  document.getElementById('arcadeCards').innerHTML = TC_GAMES.ORDER.map(TC_GAMES.get).filter(Boolean).map(g =>
+    `<button type="button" class="tcg-card" data-game="${g.id}" data-accent="${g.accent || 'teal'}" aria-label="${esc(g.title)}. ${esc(g.blurb)}">${g.scene}<div class="tcg-card-body"><div class="tcg-card-top"><h3>${esc(g.title)}</h3><span class="tcg-card-best">Best <b>${best[g.id] ? best[g.id].best : '-'}</b></span></div><p>${esc(g.blurb)}</p><div class="tcg-trains"><span>Trains</span> ${esc(g.trains)}</div></div></button>`).join('');
+  const today = localDay(); const done = !!(best.daily && Progress.rules && Progress.rules.daily && Progress.rules.daily[today]);
+  document.getElementById('dailyBanner').innerHTML = `<div><p class="eyebrow">Daily Challenge · ${today}</p><h2>One passage a day</h2><p class="lede">${done ? 'Today is counted. You can still practise the passage.' : 'Your first finished run today counts and is compared with your earlier days.'}</p></div><button class="btn primary" data-game="daily">${done ? 'Practise today' : 'Play today'}</button>`;
 }
-function siStop(){ SI.running=false; cancelAnimationFrame(SI.animHandle); }
-function siLoop(ts){
-  if(!SI.running) return;
-  const dt = ts - SI.lastTs; SI.lastTs = ts;
-  SI.spawnTimer += dt;
-  if(SI.spawnTimer > SI.spawnInterval){ SI.spawnTimer = 0; siSpawnShip(); if(SI.spawnInterval > 700) SI.spawnInterval -= 25; }
-  SI.ships.forEach(s => { s.y += s.speed*(dt/1000); if(s.hitFlash>0) s.hitFlash -= dt; });
-  const bottom = SI.canvas.height - 24;
-  const survivors = [];
-  SI.ships.forEach(s => { if(s.y >= bottom){ SI.lives--; SI.buffer=''; } else survivors.push(s); });
-  SI.ships = survivors;
-  if(SI.lives <= 0){ siGameOver(); return; }
-  siRender(); siUpdateHud();
-  SI.animHandle = requestAnimationFrame(siLoop);
+function playGame(id){
+  stopArcade();
+  document.getElementById('funSelectView').style.display = 'none';
+  const play = document.getElementById('arcadePlay'); play.style.display = 'flex';
+  const el = document.getElementById('arcadeStage'); el.innerHTML = ''; arcadeGame = id;
+  if(id === 'daily'){
+    const date = localDay(), hist = Object.entries((Progress.rules && Progress.rules.daily) || {}).map(([d,v]) => ({ date:d, wpm:v.wpm, accuracy:v.accuracy }));
+    arcadeHandle = TC_GAMES.daily.mount(el, Object.assign(arcadeCtx('daily'), { date, text:TC_COURSE.dailyText(date), done:hist.some(h => h.date === date), history:hist }));
+  } else arcadeHandle = TC_GAMES.get(id).mount(el, arcadeCtx(id));
+  window.scrollTo(0,0);
 }
-/* canvas can't read CSS variables directly, so the active theme is sampled and
-   cached, then invalidated whenever applyTheme() runs */
-let paletteCache = null;
-function themePalette(){
-  if(paletteCache) return paletteCache;
-  const cs = getComputedStyle(document.documentElement);
-  const pick = (n,f) => cs.getPropertyValue(n).trim() || f;
-  paletteCache = { bg:pick('--sub-alt','#2c2e31'), sub:pick('--sub','#646669'),
-    accent:pick('--accent','#e2b714'), text:pick('--text','#d1d0c5'), error:pick('--error','#ca4754') };
-  return paletteCache;
-}
-function siRender(){
-  const ctx = SI.ctx, c = SI.canvas;
-  const { bg, sub, accent, text, error } = themePalette();
-  ctx.fillStyle = bg; ctx.fillRect(0,0,c.width,c.height);
-  ctx.fillStyle = sub; ctx.globalAlpha = 0.35;
-  for(let i=0;i<30;i++){ ctx.fillRect((i*53)%c.width, (i*97)%c.height, 2, 2); }
-  ctx.globalAlpha = 1;
-  SI.ships.forEach(s => {
-    const w = s.isBoss?52:26, h = s.isBoss?32:18;
-    ctx.fillStyle = s.hitFlash>0 ? text : (s.isBoss ? accent : sub);
-    ctx.fillRect(s.x-w/2, s.y-h/2, w, h);
-    const matched = (SI.buffer && s.word.startsWith(SI.buffer)) ? SI.buffer.length : 0;
-    ctx.font='14px "IBM Plex Mono", monospace'; ctx.textAlign='left';
-    const typedPart = s.word.slice(0,matched), restPart = s.word.slice(matched);
-    const totalWidth = ctx.measureText(s.word).width;
-    const startX = s.x - totalWidth/2;
-    ctx.fillStyle = accent; ctx.fillText(typedPart, startX, s.y-h/2-8);
-    ctx.fillStyle = text; ctx.fillText(restPart, startX+ctx.measureText(typedPart).width, s.y-h/2-8);
-    if(s.isBoss){
-      ctx.fillStyle=sub; ctx.globalAlpha=0.4; ctx.fillRect(s.x-26, s.y-h/2-22, 52, 4); ctx.globalAlpha=1;
-      ctx.fillStyle=error; ctx.fillRect(s.x-26, s.y-h/2-22, 52*(s.hp/s.maxHp), 4);
-    }
-  });
-}
-function siUpdateHud(){
-  document.getElementById('siScore').textContent = SI.score;
-  document.getElementById('siLives').textContent = '❤️'.repeat(Math.max(0,SI.lives)) || '💀';
-}
-function siGameOver(){
-  siStop();
-  document.getElementById('siFinalScore').textContent = SI.score;
-  document.getElementById('siGameOver').classList.remove('hidden');
-}
-function siHandleChar(ch){
-  if(!SI.running) return;
-  const candidate = SI.buffer + ch;
-  const target = SI.ships.find(s => s.word.startsWith(candidate));
-  if(target){
-    SI.buffer = candidate;
-    if(SI.buffer === target.word){
-      target.hp -= 1; target.hitFlash = 120;
-      playSound('correct');
-      if(target.hp <= 0){ SI.ships = SI.ships.filter(s => s !== target); SI.score += target.isBoss ? 50 : 10; }
-      SI.buffer = '';
-    }
-  } else {
-    SI.buffer = '';
-    playSound('incorrect');
-  }
-}
-document.addEventListener('keydown', (e) => {
-  if(document.getElementById('spaceInvadersView').style.display === 'none') return;
-  if(typingElsewhere(e) || isShortcut(e)) return;
-  if(e.key === ' ') e.preventDefault();
-  if(e.key.length === 1){ e.preventDefault(); siHandleChar(e.key.toLowerCase()); }
+document.getElementById('funSelectView').addEventListener('click', (e) => { const b = e.target.closest('[data-game]'); if(b) playGame(b.dataset.game); });
+document.getElementById('arcadeBackBtn').addEventListener('click', openFunMode);
+document.getElementById('funSelectView').addEventListener('pointermove', (e) => {
+  if(Settings.effects !== 'full' || (e.pointerType && e.pointerType !== 'mouse')) return;
+  const card = e.target.closest('.tcg-card'); if(!card) return;
+  const r = card.getBoundingClientRect(), x = (e.clientX-r.left)/r.width, y = (e.clientY-r.top)/r.height;
+  card.style.setProperty('--tcg-ry', ((x-.5)*10).toFixed(2)+'deg'); card.style.setProperty('--tcg-rx', ((.5-y)*8).toFixed(2)+'deg');
+  card.style.setProperty('--tcg-gx', (x*100).toFixed(0)+'%'); card.style.setProperty('--tcg-gy', (y*100).toFixed(0)+'%'); card.style.setProperty('--tcg-go', 1);
 });
-document.getElementById('funModeBtn').addEventListener('click', openFunMode);
-document.getElementById('funBackBtn').addEventListener('click', backToDashboard);
-document.getElementById('playSiBtn').addEventListener('click', () => {
-  document.getElementById('funSelectView').style.display='none';
-  document.getElementById('spaceInvadersView').style.display='flex';
-  siStart();
-});
-document.getElementById('siBackBtn').addEventListener('click', () => { siStop(); openFunMode(); });
-document.getElementById('siExitBtn').addEventListener('click', () => { siStop(); openFunMode(); });
-document.getElementById('siReplayBtn').addEventListener('click', siStart);
-
-/* ==========================================================================
-   10. FUN MODE — Metronome Rhythm Challenge
-   A steady click sets the beat; typing near a beat builds a combo multiplier.
-   ========================================================================== */
-const MET = { bpm:80, beatMs:750, running:false, beatTimes:[], score:0, combo:0, bestCombo:0, onBeatHits:0, totalHits:0, tickHandle:null, text:'', index:0, letters:[] };
-const TOLERANCE_MS = 160; // how close to a beat counts as "on time"
-
-function metPlayClick(){
-  const vol = volume();
-  if(!audioCtx || vol===0) return;
-  const now = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.type='sine'; osc.frequency.setValueAtTime(880, now);
-  gain.gain.setValueAtTime(0.08*vol, now); gain.gain.exponentialRampToValueAtTime(0.0001, now+0.08);
-  osc.start(now); osc.stop(now+0.08);
-}
-function metBeatPulse(){
-  const dot = document.getElementById('beatDot');
-  dot.classList.add('pulse'); setTimeout(() => dot.classList.remove('pulse'), 120);
-}
-function metTick(){
-  if(!MET.running) return;
-  MET.beatTimes.push(Date.now());
-  if(MET.beatTimes.length > 8) MET.beatTimes.shift();
-  metPlayClick(); metBeatPulse();
-}
-function metText(){
-  const pool = []; lessons.forEach(l => { if(Array.isArray(l.wordDrill)) l.wordDrill.forEach(w => { if(/^[a-zA-Z]+$/.test(w)) pool.push(w.toLowerCase()); }); });
-  const items = []; for(let i=0;i<28;i++) items.push(pool[randInt(0,pool.length-1)]);
-  return items.join(' ');
-}
-function metRender(){
-  const disp = document.getElementById('metroTextDisplay');
-  disp.innerHTML = '';
-  const frag = document.createDocumentFragment();
-  let word = null; // same per-word grouping as renderText()
-  for(const ch of MET.text){
-    const span = document.createElement('span'); span.className='letter default';
-    span.textContent = (ch===' ') ? '\u00A0' : ch;
-    if(!word){ word = document.createElement('span'); word.className='word'; frag.appendChild(word); }
-    word.appendChild(span);
-    if(ch===' ') word = null;
-  }
-  disp.appendChild(frag);
-  MET.letters = Array.from(disp.querySelectorAll('.letter'));
-  if(MET.letters.length) MET.letters[0].classList.add('current');
-}
-function metStart(){
-  MET.bpm = parseInt(document.getElementById('metroBpmSelect').value, 10) || 80;
-  MET.beatMs = 60000 / MET.bpm;
-  MET.running = true; MET.beatTimes=[]; MET.score=0; MET.combo=0; MET.bestCombo=0; MET.onBeatHits=0; MET.totalHits=0;
-  MET.text = metText(); MET.index = 0;
-  metRender(); metUpdateHud();
-  document.getElementById('metroResultsOverlay').classList.add('hidden');
-  clearInterval(MET.tickHandle);
-  metTick(); // immediate first beat so the user isn't waiting
-  MET.tickHandle = setInterval(metTick, MET.beatMs);
-  document.getElementById('metroTyper').value='';
-  document.getElementById('metroStartHint').style.display='flex';
-}
-function metStop(){ MET.running=false; clearInterval(MET.tickHandle); }
-function metUpdateHud(){
-  document.getElementById('metroScore').textContent = MET.score;
-  document.getElementById('metroCombo').textContent = MET.combo;
-  const pct = MET.totalHits ? Math.round((MET.onBeatHits/MET.totalHits)*100) : 100;
-  document.getElementById('metroOnBeat').textContent = pct;
-}
-function metClosestBeatDelta(now){
-  if(MET.beatTimes.length===0) return 99999;
-  let best = 99999;
-  MET.beatTimes.forEach(t => { const d = Math.abs(now-t); if(d<best) best=d; });
-  return best;
-}
-function metHandleKey(e){
-  if(!MET.running || isShortcut(e)) return;
-  if(e.key===' ') e.preventDefault();
-  if(e.key.length!==1) return;
-  if(MET.index>=MET.letters.length) return;
-  e.preventDefault();
-  const expected = MET.text[MET.index];
-  const isCorrect = e.key===expected;
-  const delta = metClosestBeatDelta(Date.now());
-  const onBeat = isCorrect && delta<=TOLERANCE_MS;
-  MET.totalHits++;
-  if(onBeat) MET.onBeatHits++;
-
-  if(isCorrect){
-    MET.letters[MET.index].className='letter correct';
-    if(onBeat){ MET.combo++; MET.score += 10*Math.min(MET.combo,10); playSound('correct'); }
-    else{ MET.combo=0; MET.score += 2; playSound('correct'); }
-    MET.bestCombo = Math.max(MET.bestCombo, MET.combo);
-  } else {
-    MET.letters[MET.index].className='letter incorrect';
-    MET.combo=0; playSound('incorrect');
-  }
-  MET.letters.forEach(l=>l.classList.remove('current'));
-  MET.index++;
-  if(MET.index<MET.letters.length) MET.letters[MET.index].classList.add('current');
-  metUpdateHud();
-  if(MET.index>=MET.letters.length) metFinish();
-}
-function metFinish(){
-  metStop();
-  document.getElementById('metroFinalScore').textContent = MET.score;
-  document.getElementById('metroBestCombo').textContent = MET.bestCombo;
-  const pct = MET.totalHits ? Math.round((MET.onBeatHits/MET.totalHits)*100) : 100;
-  document.getElementById('metroFinalOnBeat').textContent = pct+'%';
-  document.getElementById('metroFinalBpm').textContent = MET.bpm;
-  document.getElementById('metroResultsOverlay').classList.remove('hidden');
-}
-document.getElementById('metroTyper').addEventListener('focus', () => { document.getElementById('metroStartHint').style.display='none'; document.getElementById('metroPaper').classList.add('focused'); });
-document.getElementById('metroTyper').addEventListener('blur', () => { document.getElementById('metroPaper').classList.remove('focused'); if(MET.index===0) document.getElementById('metroStartHint').style.display='flex'; });
-document.getElementById('metroStartHint').addEventListener('click', () => document.getElementById('metroTyper').focus());
-document.getElementById('metroPaper').addEventListener('click', () => document.getElementById('metroTyper').focus());
-document.getElementById('metroTyper').addEventListener('keydown', metHandleKey);
-document.addEventListener('keydown', (e) => {
-  if(document.getElementById('metronomeView').style.display==='none') return;
-  if(typingElsewhere(e) || isShortcut(e)) return;
-  // not focused yet: take focus and count this key too, instead of swallowing it
-  if(document.activeElement!==document.getElementById('metroTyper') && e.key.length===1){ document.getElementById('metroTyper').focus(); metHandleKey(e); }
-});
-document.getElementById('playMetroBtn').addEventListener('click', () => {
-  document.getElementById('funSelectView').style.display='none';
-  document.getElementById('metronomeView').style.display='flex';
-  metStart();
-});
-document.getElementById('metroBackBtn').addEventListener('click', () => { metStop(); openFunMode(); });
-document.getElementById('metroExitBtn').addEventListener('click', () => { metStop(); openFunMode(); });
-document.getElementById('metroReplayBtn').addEventListener('click', metStart);
-
-/* ==========================================================================
-   11. FUN MODE — Tug-of-War (Bot vs Human)
-   ========================================================================== */
-const TOW = { running:false, botWpm:45, text:'', index:0, letters:[], startTime:null, correctChars:0, animHandle:null, finished:false };
-function towText(){
-  const pool = lessons.map(l=>l.paragraphDrill).filter(Boolean);
-  return pool[randInt(0,pool.length-1)] || "Practice makes the mechanics disappear, one steady keystroke at a time.";
-}
-function towRender(){
-  const disp = document.getElementById('towTextDisplay');
-  disp.innerHTML=''; const frag = document.createDocumentFragment();
-  let word = null; // same per-word grouping as renderText()
-  for(const ch of TOW.text){
-    const span=document.createElement('span'); span.className='letter default';
-    span.textContent=(ch===' ')?'\u00A0':ch;
-    if(!word){ word=document.createElement('span'); word.className='word'; frag.appendChild(word); }
-    word.appendChild(span);
-    if(ch===' ') word=null;
-  }
-  disp.appendChild(frag);
-  TOW.letters = Array.from(disp.querySelectorAll('.letter'));
-  if(TOW.letters.length) TOW.letters[0].classList.add('current');
-}
-function towStart(){
-  TOW.botWpm = parseInt(document.getElementById('towBotSpeedSelect').value,10) || 45;
-  TOW.text = towText(); TOW.index=0; TOW.correctChars=0; TOW.startTime=null; TOW.finished=false; TOW.running=true;
-  document.getElementById('towBotWpmLabel').textContent = TOW.botWpm;
-  document.getElementById('towUserWpm').textContent = 0;
-  document.getElementById('towFlag').style.left = '50%';
-  document.getElementById('towResultsOverlay').classList.add('hidden');
-  towRender();
-  document.getElementById('towTyper').value='';
-  document.getElementById('towStartHint').style.display='flex';
-  cancelAnimationFrame(TOW.animHandle);
-  TOW.animHandle = requestAnimationFrame(towLoop);
-}
-function towStop(){ TOW.running=false; cancelAnimationFrame(TOW.animHandle); }
-function towLoop(){
-  if(!TOW.running) return;
-  if(TOW.startTime){
-    const elapsedMin = (Date.now()-TOW.startTime)/60000;
-    const userWpm = elapsedMin>0 ? Math.round((TOW.correctChars/5)/elapsedMin) : 0;
-    document.getElementById('towUserWpm').textContent = userWpm;
-
-    const userProgress = Math.min(1, TOW.correctChars/TOW.text.length);
-    const botCharsPerSec = (TOW.botWpm*5)/60;
-    const botProgress = Math.min(1, ((Date.now()-TOW.startTime)/1000*botCharsPerSec)/TOW.text.length);
-    const flagPct = Math.max(4, Math.min(96, 50 + (userProgress-botProgress)*50));
-    document.getElementById('towFlag').style.left = flagPct+'%';
-
-    if(!TOW.finished && botProgress>=1){ towFinish(false); }
-    else if(!TOW.finished && userProgress>=1){ towFinish(true); }
-  }
-  TOW.animHandle = requestAnimationFrame(towLoop);
-}
-function towHandleKey(e){
-  if(!TOW.running || TOW.finished || isShortcut(e)) return;
-  if(e.key===' ') e.preventDefault();
-  if(e.key.length!==1) return;
-  if(TOW.index>=TOW.letters.length) return;
-  e.preventDefault();
-  if(!TOW.startTime) TOW.startTime = Date.now();
-  const expected = TOW.text[TOW.index];
-  const isCorrect = e.key===expected;
-  if(isCorrect){ TOW.letters[TOW.index].className='letter correct'; TOW.correctChars++; playSound('correct'); }
-  else{ TOW.letters[TOW.index].className='letter incorrect'; playSound('incorrect'); }
-  TOW.letters.forEach(l=>l.classList.remove('current'));
-  TOW.index++;
-  if(TOW.index<TOW.letters.length) TOW.letters[TOW.index].classList.add('current');
-}
-function towFinish(userWon){
-  TOW.finished = true; towStop();
-  const elapsedMin = TOW.startTime ? (Date.now()-TOW.startTime)/60000 : 0.001;
-  const userWpm = Math.round((TOW.correctChars/5)/Math.max(elapsedMin,0.001));
-  document.getElementById('towResultTitle').textContent = userWon ? '🏆 You pulled the flag!' : '🤖 The bot out-typed you';
-  document.getElementById('towFinalUserWpm').textContent = userWpm;
-  document.getElementById('towFinalBotWpm').textContent = TOW.botWpm;
-  document.getElementById('towResultsOverlay').classList.remove('hidden');
-}
-document.getElementById('towTyper').addEventListener('focus', () => { document.getElementById('towStartHint').style.display='none'; document.getElementById('towPaper').classList.add('focused'); });
-document.getElementById('towTyper').addEventListener('blur', () => { document.getElementById('towPaper').classList.remove('focused'); if(TOW.index===0) document.getElementById('towStartHint').style.display='flex'; });
-document.getElementById('towStartHint').addEventListener('click', () => document.getElementById('towTyper').focus());
-document.getElementById('towPaper').addEventListener('click', () => document.getElementById('towTyper').focus());
-document.getElementById('towTyper').addEventListener('keydown', towHandleKey);
-document.addEventListener('keydown', (e) => {
-  if(document.getElementById('tugOfWarView').style.display==='none') return;
-  if(typingElsewhere(e) || isShortcut(e)) return;
-  if(document.activeElement!==document.getElementById('towTyper') && e.key.length===1){ document.getElementById('towTyper').focus(); towHandleKey(e); }
-});
-document.getElementById('playTowBtn').addEventListener('click', () => {
-  document.getElementById('funSelectView').style.display='none';
-  document.getElementById('tugOfWarView').style.display='flex';
-  towStart();
-});
-document.getElementById('towBackBtn').addEventListener('click', () => { towStop(); openFunMode(); });
-document.getElementById('towExitBtn').addEventListener('click', () => { towStop(); openFunMode(); });
-document.getElementById('towReplayBtn').addEventListener('click', towStart);
 
 /* ==========================================================================
    12. FEEDBACK BOX (stored locally — this app has no backend/server)
@@ -1313,9 +1018,8 @@ paper.addEventListener('click', () => typer.focus());
 
 document.getElementById('brandHome').addEventListener('click', backToDashboard);
 document.getElementById('backBtn').addEventListener('click', backToDashboard);
-document.getElementById('dashboardBtn').addEventListener('click', backToDashboard);
 document.getElementById('restartBtn').addEventListener('click', resetLesson);
-document.getElementById('retryBtn').addEventListener('click', resetLesson);
+
 
 /* ==========================================================================
    13. ACCOUNTS — sign in, profile, and progress saved to the server
@@ -1442,6 +1146,7 @@ const Sync = {
       this.queue.shift(); this.persist();
       if(!res.ok){ console.warn('TypeCraft: the server refused a save', op.path, res.error && res.error.code); continue; }
       if(op.kind === 'complete' && res.lesson) applyLessonRow(res.lesson);
+      if(op.kind === 'complete' && res.lessons) applyServerState(res);
     }
     if(!this.queue.length) setSyncStatus('saved');
   },
@@ -1460,7 +1165,7 @@ const Sync = {
   queuePosition(){
     clearTimeout(this.posTimer); this.posTimer = null;
     if(!this.pendingPos || !Account.user) return;
-    this.enqueue({ kind:'position', method:'PUT', path:'/api/user/progress/position', body:this.pendingPos });
+    this.enqueue({ kind:'position', method:'PUT', path:'/api/user/position', body:{ lessonId:this.pendingPos.lessonId, step:this.pendingPos.stage, at:new Date().toISOString() } });
     this.pendingPos = null;
   },
   complete(run){ this.enqueue({ kind:'complete', method:'POST', path:'/api/user/progress/lesson-complete', body:Object.assign({ eventId:newEventId() }, run) }); },
@@ -1528,6 +1233,7 @@ async function refreshAccountData(){
   // a lesson being typed right now keeps its in-memory state; the rest comes from the server
   if(lessonView.style.display !== 'none' && startTime && !lessonFinished){ Account.pendingServerData = res; return true; }
   applyServerProgress(res);
+  await loadServerState();
   Account.loaded = true; // the server's copy is on screen
   if(!Sync.queue.length) setSyncStatus('');
   return true;
@@ -1553,6 +1259,7 @@ function leaveAccount(){
   renderAccountUi();
   if(document.getElementById('accountView').style.display !== 'none') backToDashboard();
   reloadLearningState();
+  rebuildGuestProgress(); renderRewardBits();
 }
 function handleSessionEnded(){
   if(!Account.user) return;
@@ -1802,10 +1509,10 @@ document.getElementById('importNoBtn').addEventListener('click', () => {
 function openAccount(tab){
   closeAccountMenu();
   if(!Account.user) return openAuth('signin');
-  ['homeView','lessonView','funSelectView','spaceInvadersView','metronomeView','tugOfWarView','settingsView','progressView','workshopView'].forEach(id => { document.getElementById(id).style.display = 'none'; });
+  ['homeView','lessonView','funSelectView','arcadePlay','settingsView','progressView','workshopView'].forEach(id => { document.getElementById(id).style.display = 'none'; });
   setNavCurrent('accountView');
   resultsView.classList.add('hidden');
-  siStop(); metStop(); towStop(); stopTimers();
+  stopArcade(); stopTimers();
   document.getElementById('accountView').style.display = 'flex';
   setAccountTab(tab === 'password' ? 'settings' : tab);
   if(tab === 'password') setTimeout(() => { document.getElementById('passwordSection').scrollIntoView({ behavior:'smooth', block:'start' }); document.querySelector('#changePasswordForm input').focus(); }, 60);
@@ -1998,6 +1705,121 @@ async function initAccount(){
   if(action) handleHashAction(action);
 }
 
+
+/* ==========================================================================
+   15. PROGRESS ENGINE — events, XP, ranks, quests, badges (shared/rewards-rules.js)
+   Every finished step, lesson, test, boss and game is an event with an id made
+   here. Guests: events are kept in this browser (typingMasterEvents) and the
+   totals are worked out from them with the same rules the server uses.
+   Signed in: events go to POST /api/user/events through the save queue, and the
+   server's answer replaces the totals shown here.
+   ========================================================================== */
+const EVENTS_KEY = 'typingMasterEvents', PLACEMENT_KEY = 'typingMasterPlacement', GHOST_KEY = 'typingMasterGhosts';
+const Progress = { rules:null, view:null };
+function localDay(d){ d = d || new Date(); const p = n => String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function readEvents(){ try{ return JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]'); }catch(e){ return []; } }
+function writeEvents(list){ try{ localStorage.setItem(EVENTS_KEY, JSON.stringify(list.slice(-4000))); }catch(e){} }
+/* what the server's normalizeEvent does, for the copy kept in this browser */
+function prepEvent(raw){
+  const at = new Date(raw.at);
+  return Object.assign({ lessonId:null, gameId:null, step:null, kind:null, wpm:0, accuracy:0, errors:0, seconds:0, stars:null, crown:0, score:null, data:{} },
+    raw, { day: localDay(at), hour: at.getHours(), xpClaim: raw.type === 'game' ? Math.min(TC_RULES.XP.gameMax, Math.max(0, raw.xp|0)) : 0,
+      crown: raw.crown === true ? 1 : 0, data: Object.assign({}, raw.data || {}) });
+}
+/* the same shape as GET /api/user/state, made from the rules state */
+function viewOf(st){
+  const today = localDay();
+  const lessonsView = {};
+  for(const [id, L] of Object.entries(st.lessons)) lessonsView[id] = { status:L.status, step:L.step, stars:L.stars, crown:!!L.crown, bestWpm:L.bestWpm, bestAccuracy:L.bestAccuracy, attempts:L.attempts, lastPlayed:L.lastPlayed, lastWpm:L.lastWpm, lastAccuracy:L.lastAccuracy };
+  const streak = TC_RULES.streakOf(Object.keys(st.days).filter(d => st.days[d].active), today);
+  const dq = st.quests[today] || {};
+  const rank = TC_META.rankFor(st.xp);
+  const td = st.days[today];
+  return {
+    lessons: lessonsView, totals: TC_RULES.totalsOf(st), xp: st.xp, rank: { name:rank.name, min:rank.min, next:rank.next },
+    streak: { count: streak.current || 0, best: streak.best, lastDate: streak.lastDate, freezesUsedThisWeek: streak.freezesUsedThisWeek || 0 },
+    today: { date: today, minutes: td ? Math.round(td.seconds/60) : 0, goal: Settings.dailyGoal, xp: td ? td.xp : 0 },
+    quests: { date: today, items: TC_RULES.questsFor(today).map(q => ({ id:q.id, title:q.title, goal:q.goal, progress: dq[q.id] ? dq[q.id].progress : 0, done: !!(dq[q.id] && dq[q.id].doneAt) })) },
+    badges: Object.entries(st.badges).map(([id,b]) => ({ id, at:b.at })),
+    certificates: Object.entries(st.certificates).map(([lv,c]) => ({ level:+lv, wpm:c.wpm, accuracy:c.accuracy, seconds:c.seconds, at:c.at })),
+    unlocks: TC_RULES.unlocksFor(st.xp), games: Object.fromEntries(Object.entries(st.games).map(([id,g]) => [id, { best:g.best, runs:g.runs }])),
+    placement: st.placement, settings: Settings,
+    history: Object.entries(st.days).sort().map(([date,d]) => ({ date, minutes: Math.round(d.seconds/60), runs:d.runs, bestWpm:d.bestWpm || null, avgAccuracy: d.accCount ? Math.round(d.accSum/d.accCount) : null, xp:d.xp, quests:d.questsDone })),
+  };
+}
+/* guests: rebuild the totals from the events kept here; old saves become import events once */
+function rebuildGuestProgress(){
+  let evs = readEvents();
+  if(!evs.length){
+    let legacy = {}; try{ legacy = JSON.parse(localStorage.getItem('typingMasterProgress') || '{}'); }catch(e){}
+    const now = new Date().toISOString();
+    evs = Object.entries(legacy).filter(([id]) => TC_META.BY_ID[id]).map(([id, p]) => ({ id:'legacy-'+id, type:'import', lessonId:id, stars:p.stars||0, wpm:p.bestWpm||0, accuracy:p.bestAcc||0, at:now }));
+    if(evs.length) writeEvents(evs);
+  }
+  const st = TC_RULES.emptyState();
+  for(const e of evs){ try{ TC_RULES.apply(st, prepEvent(e)); }catch(err){} }
+  Progress.rules = st; Progress.view = viewOf(st);
+}
+/* a rules state rebuilt from the server's view, to show what an event earns before the server answers */
+function scratchFromView(v){
+  const st = TC_RULES.emptyState(); if(!v) return st;
+  st.xp = v.xp || 0;
+  for(const [id,L] of Object.entries(v.lessons || {})) st.lessons[id] = { status:L.status, step:L.step||0, stars:L.stars||0, crown:L.crown?1:0, bestWpm:L.bestWpm||0, bestAccuracy:L.bestAccuracy||0, attempts:L.attempts||0, lastWpm:L.lastWpm, lastAccuracy:L.lastAccuracy, lastPlayed:L.lastPlayed, completedAt:null, bossWon: (TC_META.BY_ID[id] && TC_META.BY_ID[id].kind === 'boss' && L.status === 'completed') ? 1 : 0 };
+  (v.badges || []).forEach(b => { st.badges[b.id] = { at:b.at }; });
+  return st;
+}
+/** Records one event. Returns what it earned (xp, badges, quests, certificates, rank-up), for the screen. */
+function emitEvent(ev){
+  const e = Object.assign({ id:newEventId(), at:new Date().toISOString(), tz:-new Date().getTimezoneOffset() }, ev);
+  const xpBefore = (Progress.view && Progress.view.xp) || 0;
+  let out = { xp:0, badges:[], quests:[], certificates:[] };
+  if(Account.user){
+    try{ out = TC_RULES.apply(scratchFromView(Progress.view), prepEvent(e)); }catch(err){}
+    Sync.event(e);
+  } else {
+    const list = readEvents(); list.push(e); writeEvents(list);
+    try{ out = TC_RULES.apply(Progress.rules, prepEvent(e)); }catch(err){}
+    Progress.view = viewOf(Progress.rules);
+  }
+  const before = TC_META.rankFor(xpBefore), after = TC_META.rankFor(xpBefore + (out.xp || 0));
+  out.xpBefore = xpBefore; out.rankUp = after.name !== before.name ? after.name : null;
+  if(!Account.user) renderRewardBits();
+  if(out.badges && out.badges.length && !(ev.type === 'run' || ev.type === 'game')) toast('Badge earned: ' + out.badges.map(badgeName).join(', '));
+  return out;
+}
+function badgeName(id){ const b = (TC_RULES.BADGES || []).find(x => x.id === id); return b ? b.name : id; }
+/* signed in: the server's answer is the truth */
+function applyServerState(v){
+  if(!v || !v.lessons) return;
+  const view = Object.assign({}, v); delete view.sync; delete view.awarded;
+  Progress.view = view;
+  // lesson cards and Continue read `progress`: keep it in step with the server's lessons
+  for(const [id, L] of Object.entries(v.lessons)){
+    if(L.status === 'not_started' && !progress[id]) continue;
+    progress[id] = Object.assign(progress[id] || {}, { stars:L.stars, bestWpm:L.bestWpm, bestAcc:L.bestAccuracy, status:L.status, crown:L.crown?1:0, attempts:L.attempts, stage:L.step });
+  }
+  if(v.position && TC_META.BY_ID[v.position.lessonId]) Account.data.typingMasterPosition = JSON.stringify({ lessonId:v.position.lessonId, stage:v.position.step||0, at:v.position.at });
+  saveProgress();
+  renderRewardBits();
+  if(homeView.style.display !== 'none') renderHome();
+}
+async function loadServerState(){
+  const res = await api('GET', '/api/user/state?today=' + localDay());
+  if(res.ok) applyServerState(res);
+  return res.ok;
+}
+Sync.event = function(e){ this.enqueue({ kind:'complete', method:'POST', path:'/api/user/events', body:{ events:[e], today:localDay() } }); };
+/* rank chip in the top bar, quests on the home screen */
+function renderRewardBits(){
+  const v = Progress.view; if(!v) return;
+  const chip = document.getElementById('rankChip');
+  chip.hidden = false; chip.innerHTML = TC_REWARDS_UI.rankBar(v);
+  const streakN = Math.max(v.streak ? v.streak.count : 0, +document.getElementById('streakCount').textContent || 0);
+  document.getElementById('streakCount').textContent = streakN;
+  const q = document.getElementById('questsPanel');
+  if(q) q.innerHTML = TC_REWARDS_UI.questsPanel(v.quests, { goal: Settings.dailyGoal, minutes: v.today ? v.today.minutes : 0 });
+}
+
 /* ==========================================================================
    14. LOOK: themes, effects, settings, navigation (next version, phase 1)
    Settings are saved under typingMasterSettings. typingMasterTheme keeps its
@@ -2104,14 +1926,14 @@ document.addEventListener('pointerout', (e)=>{
 });
 
 /* views: one shown at a time */
-const VIEW_IDS=['homeView','lessonView','funSelectView','spaceInvadersView','metronomeView','tugOfWarView','accountView','settingsView','progressView','workshopView'];
+const VIEW_IDS=['homeView','lessonView','funSelectView','arcadePlay','accountView','settingsView','progressView','workshopView'];
 function setNavCurrent(id){
-  const map={homeView:'navLearn',lessonView:'navLearn',funSelectView:'funModeBtn',spaceInvadersView:'funModeBtn',metronomeView:'funModeBtn',tugOfWarView:'funModeBtn',progressView:'navProgress',workshopView:'navWorkshop',settingsView:'navSettings'};
+  const map={homeView:'navLearn',lessonView:'navLearn',funSelectView:'funModeBtn',arcadePlay:'funModeBtn',progressView:'navProgress',workshopView:'navWorkshop',settingsView:'navSettings'};
   ['navLearn','funModeBtn','navProgress','navWorkshop','navSettings'].forEach(b=>{ const el=document.getElementById(b); if(el) el.toggleAttribute('aria-current', map[id]===b); if(el && map[id]===b) el.setAttribute('aria-current','page'); });
 }
 function hideExtraViews(){ ['settingsView','progressView','workshopView'].forEach(id=>{ document.getElementById(id).style.display='none'; }); }
 function openPage(id){
-  siStop(); metStop(); towStop(); stopTimers(); resultsView.classList.add('hidden'); closeAccountMenu(); closeThemeMenu();
+  stopArcade(); stopTimers(); resultsView.classList.add('hidden'); closeAccountMenu(); closeThemeMenu();
   VIEW_IDS.forEach(v=>{ document.getElementById(v).style.display = v===id ? 'flex' : 'none'; });
   setNavCurrent(id); window.scrollTo(0,0);
 }
@@ -2153,7 +1975,15 @@ function renderSettingsPage(){
 }
 document.getElementById('navLearn').addEventListener('click', backToDashboard);
 document.getElementById('navSettings').addEventListener('click', ()=>{ openPage('settingsView'); renderSettingsPage(); });
-document.getElementById('navProgress').addEventListener('click', ()=>openPage('progressView'));
+document.getElementById('navProgress').addEventListener('click', ()=>{ openPage('progressView'); renderProgressPage(); });
+async function renderProgressPage(){
+  const body = document.getElementById('progressBody'); body.className = 'progress-body';
+  let history = (Progress.view && Progress.view.history) || [];
+  if(Account.user){ const r = await api('GET', '/api/user/history?today=' + localDay()); if(r.ok && r.days) history = r.days.map(d => Object.assign({}, d, { quests:d.questsDone })); }
+  body.innerHTML = TC_REWARDS_UI.progressScreen(Object.assign({}, Progress.view || {}, { settings: Settings }), history,
+    { keyStats, bigramLatency, errorClasses, today: localDay(), name: Account.user ? Account.user.fullName : '', defs: TC_RULES.BADGES });
+  TC_REWARDS_UI.enhance(body, { name: Account.user ? Account.user.fullName : '' });
+}
 document.getElementById('navWorkshop').addEventListener('click', ()=>openPage('workshopView'));
 window.addEventListener('beforeunload', saveKeyStats);
 
@@ -2168,11 +1998,10 @@ window.addEventListener('beforeunload', saveKeyStats);
   loadProgress(); loadStreak(); loadKeyStats(); loadAnalytics();
   homeView.style.display='flex'; lessonView.style.display='none';
   document.getElementById('funSelectView').style.display='none';
-  document.getElementById('spaceInvadersView').style.display='none';
-  document.getElementById('metronomeView').style.display='none';
-  document.getElementById('tugOfWarView').style.display='none';
   document.getElementById('accountView').style.display='none';
   hideExtraViews(); setNavCurrent('homeView');
+  document.getElementById('arcadePlay').style.display='none';
+  rebuildGuestProgress();
   renderHome();
   initAccount(); // async: signs you back in and loads your account's progress, if there is a server
 })();

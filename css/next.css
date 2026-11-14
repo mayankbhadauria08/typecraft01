@@ -210,3 +210,53 @@ html,body{overflow-x:hidden}
 @media (max-width:1320px){ .topbar .streak-display .streak-label{display:none} }
 @media (max-width:1180px){ .topbar #themeToggle .nav-label,.topbar #soundToggle{font-size:0!important;gap:0} .topbar #soundToggle .nb-svg{font-size:12px} }
 @media (max-width:520px){ .dashboard-header.topbar{flex-wrap:wrap} }
+
+/* ---------- course map ---------- */
+.course-map{position:relative;height:150px;margin:6px 0 2px}
+.course-map svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.route-bg{fill:none;stroke:var(--line-strong);stroke-width:2;stroke-dasharray:4 8}
+.route-fg{fill:none;stroke:var(--teal);stroke-width:3;stroke-linecap:round;stroke-dasharray:100;filter:drop-shadow(0 0 6px var(--teal));transition:stroke-dashoffset 1.2s ease}
+.route-node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:var(--text);cursor:pointer;padding:0}
+.route-node b{width:46px;height:42px;border-radius:12px;display:grid;place-items:center;font:600 18px/1 var(--mono);background:linear-gradient(180deg,color-mix(in srgb,var(--teal) 78%,#fff),var(--teal));color:var(--teal-ink);box-shadow:0 5px 0 var(--teal-deep),0 0 26px var(--g1);position:relative}
+.route-node.next b::after{content:"";position:absolute;inset:-6px;border-radius:15px;border:1.5px solid var(--teal);animation:tcPing 2.6s ease-out infinite}
+@keyframes tcPing{to{transform:scale(1.4);opacity:0}}
+.route-node.active b{outline:2px solid var(--text);outline-offset:3px}
+.route-node span{font:500 12px/1.2 var(--sans)} .route-node small{font:500 10.5px/1 var(--mono);color:var(--muted)}
+.tier-sub{font:400 13px var(--sans);color:var(--muted);margin-left:6px}
+.lesson-card{font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative}
+.lesson-card.boss{grid-column:span 2;border-color:color-mix(in srgb,var(--brass) 60%,transparent);box-shadow:0 30px 50px -34px var(--deep),0 0 30px -14px var(--brass)}
+.lesson-card.recommended{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal),0 0 34px -10px var(--teal)}
+.lcrown{color:var(--brass);margin-left:6px;font-size:14px}
+/* ---------- lesson steps ---------- */
+.watch-panel{display:flex;flex-direction:column;gap:14px;padding:24px;border-radius:var(--radius);background:linear-gradient(160deg,var(--glass-2),var(--glass));border:1px solid var(--glass-line)}
+.watch-panel[hidden],.boss-mount[hidden],.step-note[hidden]{display:none}
+.watch-keys{display:flex;flex-wrap:wrap;gap:14px}
+.watch-key{display:flex;flex-direction:column;align-items:center;gap:8px}
+.watch-key kbd{min-width:64px;height:60px;padding:0 14px;display:grid;place-items:center;border-radius:14px;font:600 26px/1 var(--mono);color:var(--teal-ink);background:linear-gradient(180deg,color-mix(in srgb,var(--teal) 78%,#fff),var(--teal));box-shadow:0 6px 0 var(--teal-deep),0 0 30px var(--g1)}
+.watch-key.wide kbd{font:600 18px/1 var(--sans)}
+.watch-key span{font-size:13px;color:var(--muted)}
+.watch-note{margin:0;color:var(--muted);max-width:60ch}
+.watch-foot{display:flex;align-items:center;gap:14px}
+.watch-bar{flex:1;height:6px;border-radius:99px;background:var(--raise);overflow:hidden} .watch-bar i{display:block;height:100%;width:0;background:var(--teal)}
+#lessonView.mode-watch .paper-wrap,#lessonView.mode-watch .stats-row,#lessonView.mode-watch .rail-wrap,
+#lessonView.mode-boss .paper-wrap,#lessonView.mode-boss .stats-row,#lessonView.mode-boss .rail-wrap,#lessonView.mode-boss .hands-card{display:none}
+.step-note{font-size:13.5px;padding:9px 14px;border-radius:10px;background:var(--brass-soft);border:1px solid color-mix(in srgb,var(--brass) 50%,transparent)}
+.exam-line{margin:6px 0 0;color:var(--muted);font-size:14px} .exam-line b{color:var(--text)}
+.placement-card{max-width:560px;display:flex;flex-direction:column;gap:12px;padding:28px}
+.placement-card h2{margin:0;font:560 30px/1.1 var(--display)}
+.results-wrap{width:min(680px,100%);max-height:calc(100vh - 40px);overflow:auto}
+/* ---------- arcade ---------- */
+#arcadePlay{display:none;flex-direction:column;gap:14px}
+.daily-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 22px;border-radius:18px;border:1px solid var(--glass-line);background:linear-gradient(160deg,var(--glass-2),var(--glass))}
+.daily-banner h2{margin:4px 0;font:560 24px/1.1 var(--display)} .daily-banner .lede{font-size:14px}
+.quests-slot:empty{display:none}
+.progress-body{display:flex;flex-direction:column;gap:16px}
+@media (max-width:520px){ .course-map{height:120px} .route-node span,.route-node small{display:none} .route-node b{width:38px;height:34px;font-size:15px} .lesson-card.boss{grid-column:span 1} }
+
+/* top bar: icon-only sound / theme / settings (each has a title), compact streak and rank */
+.topbar .icon-btn .nav-label{display:none}
+.topbar #soundToggle{font-size:0!important;gap:0;padding:8px}
+.topbar #themeToggle,.topbar #navSettings{padding:8px}
+.topbar .streak-display .streak-label{display:none}
+.topbar .rank-chip{min-width:0;padding:0 4px}
+@media (max-width:1180px){ .topbar .rank-chip .rw-rankbar-xp{display:none} }
