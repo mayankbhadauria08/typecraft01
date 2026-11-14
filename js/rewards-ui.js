@@ -112,35 +112,35 @@
      how-earned text follow the build prompt. glyph = text on the medal. */
   const B = (id, cat, name, glyph, how) => ({ id, cat, name, glyph, how });
   const FALLBACK_BADGES = [
-    B('first_20', 'speed', 'First 20', '20', 'Reach 20 words per minute in a lesson or test.'),
-    B('thirty_club', 'speed', 'Thirty Club', '30', 'Reach 30 words per minute in a lesson or test.'),
-    B('forty_flat', 'speed', 'Forty Flat', '40', 'Reach 40 words per minute in a lesson or test.'),
-    B('fifty_up', 'speed', 'Fifty Up', '50', 'Reach 50 words per minute in a lesson or test.'),
-    B('sixty_plus', 'speed', 'Sixty Plus', '60', 'Reach 60 words per minute in a lesson or test.'),
-    B('eighty_ace', 'speed', 'Eighty Ace', '80', 'Reach 80 words per minute in a lesson or test.'),
+    B('speed_20', 'speed', 'First 20', '20', 'Reach 20 words per minute in a lesson or test.'),
+    B('speed_30', 'speed', 'Thirty Club', '30', 'Reach 30 words per minute in a lesson or test.'),
+    B('speed_40', 'speed', 'Forty Flat', '40', 'Reach 40 words per minute in a lesson or test.'),
+    B('speed_50', 'speed', 'Fifty Up', '50', 'Reach 50 words per minute in a lesson or test.'),
+    B('speed_60', 'speed', 'Sixty Plus', '60', 'Reach 60 words per minute in a lesson or test.'),
+    B('speed_80', 'speed', 'Eighty Ace', '80', 'Reach 80 words per minute in a lesson or test.'),
     B('clean_sheet', 'accuracy', 'Clean Sheet', '100', 'A lesson at 100%.'),
     B('triple_clean', 'accuracy', 'Triple Clean', '3x', 'Three 100% runs in a row.'),
     B('sharp_shooter', 'accuracy', 'Sharp Shooter', '98', '98% or better on ten lessons.'),
     B('no_slip', 'accuracy', 'No Slip', '0', 'A Sentences step with no mistake.'),
     B('steady_hand', 'accuracy', 'Steady Hand', '95', '95% or better on a 5-minute test.'),
-    B('three_days', 'streak', 'Three Days', '3', 'Practise three days in a row.'),
-    B('seven_days', 'streak', 'Seven Days', '7', 'Practise seven days in a row.'),
-    B('two_weeks', 'streak', 'Two Weeks', '14', 'Practise fourteen days in a row.'),
-    B('thirty_days', 'streak', 'Thirty Days', '30', 'Practise thirty days in a row.'),
-    B('hundred_days', 'streak', 'Hundred Days', '100', 'Practise a hundred days in a row.'),
-    B('home_row_hero', 'course', 'Home Row Hero', 'FJ', 'Three stars on every home row lesson.'),
-    B('top_row_climber', 'course', 'Top Row Climber', 'ER', 'Finish the top row unit.'),
+    B('streak_3', 'streak', 'Three Days', '3', 'Practise three days in a row.'),
+    B('streak_7', 'streak', 'Seven Days', '7', 'Practise seven days in a row.'),
+    B('streak_14', 'streak', 'Two Weeks', '14', 'Practise fourteen days in a row.'),
+    B('streak_30', 'streak', 'Thirty Days', '30', 'Practise thirty days in a row.'),
+    B('streak_100', 'streak', 'Hundred Days', '100', 'Practise a hundred days in a row.'),
+    B('home_hero', 'course', 'Home Row Hero', 'FJ', 'Three stars on every home row lesson.'),
+    B('top_climber', 'course', 'Top Row Climber', 'ER', 'Finish the top row unit.'),
     B('number_cruncher', 'course', 'Number Cruncher', '12', 'Finish the numbers unit.'),
-    B('bottom_row_diver', 'course', 'Bottom Row Diver', 'VM', 'Finish the bottom row unit.'),
+    B('bottom_diver', 'course', 'Bottom Row Diver', 'VM', 'Finish the bottom row unit.'),
     B('capital_idea', 'course', 'Capital Idea', 'Aa', 'Finish the capitals unit.'),
     B('symbol_master', 'course', 'Symbol Master', '#?', 'Finish the symbols unit.'),
     B('all_26', 'course', 'All 26', 'AZ', 'The All 26 letters lesson at 95% or better.'),
     B('master_typist', 'course', 'Master Typist', 'MT', 'Beat the final boss.'),
-    B('boss_down', 'bosses', 'Boss Down', 'KO', 'Beat one boss.'),
-    B('boss_hunter', 'bosses', 'Boss Hunter', 'KO3', 'Beat three bosses.'),
-    B('boss_slayer', 'bosses', 'Boss Slayer', 'KO6', 'Beat all six bosses.'),
-    B('storm_chaser', 'arcade', 'Storm Chaser', '1K', '1,000 points in Word Storm.'),
-    B('on_the_beat', 'arcade', 'On the Beat', '30x', 'A 30 combo in Beat Keys.'),
+    B('boss_1', 'bosses', 'Boss Down', 'KO', 'Beat one boss.'),
+    B('boss_3', 'bosses', 'Boss Hunter', 'KO3', 'Beat three bosses.'),
+    B('boss_6', 'bosses', 'Boss Slayer', 'KO6', 'Beat all six bosses.'),
+    B('storm_1000', 'arcade', 'Storm Chaser', '1K', '1,000 points in Word Storm.'),
+    B('beat_30', 'arcade', 'On the Beat', '30x', 'A 30 combo in Beat Keys.'),
     B('rope_burn', 'arcade', 'Rope Burn', '80', 'Beat the 80 words-per-minute bot in Tug-of-War.'),
     B('ghost_beaten', 'arcade', 'Ghost Beaten', 'PB', 'Beat your own replay in Ghost Race.'),
     B('sky_high', 'arcade', 'Sky High', '25', 'A tower of 25 in Word Tower.'),
@@ -442,7 +442,8 @@
     const xpEach = (root.TC_META && root.TC_META.XP && root.TC_META.XP.quest) || 30;
     const doneN = items.filter((q) => q.done).length;
     const list = items.length ? '<ul class="rw-quests">' + items.map((q) => {
-      const goal = Math.max(1, num(q.goal, 1)), prog = clamp(num(q.progress), 0, goal), done = !!q.done || prog >= goal;
+      let goal = Math.max(1, num(q.goal, 1)), prog = clamp(num(q.progress), 0, goal); const done = !!q.done || prog >= goal;
+      if (q.unit === 'seconds') { goal = Math.round(goal / 60); prog = Math.floor(prog / 60); } // shown in minutes
       return '<li class="' + (done ? 'is-done' : '') + '"><span class="rw-qcheck" aria-hidden="true">' + (done ? '<svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</span>' +
         '<span class="rw-qbody"><span class="rw-qtitle">' + esc(q.title) + '</span>' +
         '<span class="rw-bar" aria-hidden="true"><i style="width:' + ((prog / goal) * 100).toFixed(1) + '%"></i></span></span>' +

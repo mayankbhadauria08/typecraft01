@@ -287,3 +287,5 @@ html,body{overflow-x:hidden}
 /* while a lesson is open the ambient glow holds still, so every keystroke shows in the next frame */
 :root.in-lesson body::before,:root.in-lesson body::after{animation:none}
 :root.in-lesson #bgfx{display:none}
+.lesson-shell > .lesson-machine{grid-area:rail;min-width:0}
+.has-machine .lesson-shell > .watch-panel,.has-machine .lesson-shell > .boss-mount,.has-machine .lesson-shell > .step-note{grid-column:1 / -1}

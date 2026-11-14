@@ -1750,7 +1750,7 @@ function viewOf(st){
     lessons: lessonsView, totals: TC_RULES.totalsOf(st), xp: st.xp, rank: { name:rank.name, min:rank.min, next:rank.next },
     streak: { count: streak.current || 0, best: streak.best, lastDate: streak.lastDate, freezesUsedThisWeek: streak.freezesUsedThisWeek || 0 },
     today: { date: today, minutes: td ? Math.round(td.seconds/60) : 0, goal: Settings.dailyGoal, xp: td ? td.xp : 0 },
-    quests: { date: today, items: TC_RULES.questsFor(today).map(q => ({ id:q.id, title:q.title, goal:q.goal, progress: dq[q.id] ? dq[q.id].progress : 0, done: !!(dq[q.id] && dq[q.id].doneAt) })) },
+    quests: { date: today, items: TC_RULES.questsFor(today).map(q => ({ id:q.id, title:q.title, unit:q.unit, goal:q.goal, progress: dq[q.id] ? dq[q.id].progress : 0, done: !!(dq[q.id] && dq[q.id].doneAt) })) },
     badges: Object.entries(st.badges).map(([id,b]) => ({ id, at:b.at })),
     certificates: Object.entries(st.certificates).map(([lv,c]) => ({ level:+lv, wpm:c.wpm, accuracy:c.accuracy, seconds:c.seconds, at:c.at })),
     unlocks: TC_RULES.unlocksFor(st.xp), games: Object.fromEntries(Object.entries(st.games).map(([id,g]) => [id, { best:g.best, runs:g.runs }])),
@@ -2050,7 +2050,7 @@ function machineMeta(){
   const left = l.isPlacement ? 'Placement test' : l.isReview ? 'Problem keys drill' : `Level ${l.level} · ${l.title}`;
   lessonMachine.setMeta(left, `Step ${currentStage+1} of ${stages.length} · ${STEP_LABEL[stages[currentStage]] || ''}`);
 }
-function machineReadings(){ if(lessonMachine) lessonMachine.readings({ wpm:currentWpm(), accuracy:currentAccuracy(), seconds:parseFloat(timeValueEl.textContent)||0, errors:errorCount }); }
+function machineReadings(){ if(lessonMachine) lessonMachine.readings({ wpm:(startTime && Date.now()-startTime > 2000) ? currentWpm() : 0, accuracy:currentAccuracy(), seconds:parseFloat(timeValueEl.textContent)||0, errors:errorCount }); }
 
 /* ---- works offline: a service worker caches the app's own files (never /api) ---- */
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
