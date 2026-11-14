@@ -1460,7 +1460,7 @@ function guestSnapshot(){
   const get = k => { try{ return JSON.parse(localStorage.getItem(k) || 'null'); }catch(e){ return null; } };
   const prog = get('typingMasterProgress') || {};
   const ks = get('typingMasterKeyStats') || {};
-  const payload = { progress:prog, state:{ keyStats:ks, bigramLatency:get('typingMasterBigramLatency') || {}, errorClasses:get('typingMasterErrorClasses') || {}, streak:get('typingMasterStreak') || undefined } };
+  const payload = { progress:prog, state:{ keyStats:ks, bigramLatency:get('typingMasterBigramLatency') || {}, errorClasses:get('typingMasterErrorClasses') || {}, streak:get('typingMasterStreak') || undefined } , events: (get('typingMasterEvents') || []).filter(e => e && e.type !== 'import').slice(-1000) };
   return { payload, lessons:Object.keys(prog).length, stars:Object.values(prog).reduce((s, p) => s + (p.stars || 0), 0), hasAny:Object.keys(prog).length > 0 || Object.keys(ks).length > 0 };
 }
 async function fingerprint(text){
@@ -1490,13 +1490,13 @@ async function maybeOfferImport(){
 document.getElementById('importYesBtn').addEventListener('click', async (ev) => {
   if(!pendingImport || !Account.user) return;
   const btn = ev.currentTarget; btn.disabled = true; btn.textContent = 'Adding…';
-  const res = await api('POST', '/api/user/progress/import', Object.assign({ importId:pendingImport.importId }, pendingImport.payload));
+  const res = await api('POST', '/api/user/import', Object.assign({ importId:pendingImport.importId, today:localDay() }, pendingImport.payload));
   btn.disabled = false; btn.textContent = 'Add to my account';
   if(!res.ok){ const m = document.getElementById('importMsg'); m.textContent = (res.error && res.error.message) || 'Could not add it just now. Please try again.'; m.classList.add('error'); return; }
   logImport(pendingImport.importId, 'added');
   pendingImport = null;
   document.getElementById('importModal').classList.add('hidden');
-  await refreshAccountData();
+  await refreshAccountData(); await loadServerState();
   toast(res.imported ? 'Your earlier progress has been added to your account.' : 'That progress was already in your account.');
 });
 document.getElementById('importNoBtn').addEventListener('click', () => {
@@ -1984,7 +1984,61 @@ async function renderProgressPage(){
     { keyStats, bigramLatency, errorClasses, today: localDay(), name: Account.user ? Account.user.fullName : '', defs: TC_RULES.BADGES });
   TC_REWARDS_UI.enhance(body, { name: Account.user ? Account.user.fullName : '' });
 }
-document.getElementById('navWorkshop').addEventListener('click', ()=>openPage('workshopView'));
+document.getElementById('navWorkshop').addEventListener('click', ()=>{ openPage('workshopView'); renderWorkshop(); });
+
+/* ---- Workshop: keycaps, ink, paper and key sounds, unlocked by rank (all cosmetic) ---- */
+const WS_KIND = { keycaps:'Keycap sets', ink:'Ink colours', paper:'Paper stocks', keySound:'Key sounds' };
+const WS_LOOK = {
+  'keycaps:standard':{kt:'#253532',hi:'#364c46',ks:'#060b0a',kl:'#ece7d9'}, 'keycaps:ivory':{kt:'#e9dfc8',hi:'#fffaf0',ks:'#9a8a63',kl:'#2a2418'},
+  'keycaps:signal':{kt:'#b3372c',hi:'#dc5a4d',ks:'#571510',kl:'#fff3e6'}, 'keycaps:blueprint':{kt:'#1f3f7a',hi:'#3260b0',ks:'#0b1a38',kl:'#eaf2ff'},
+  'keycaps:midnight':{kt:'#14141c',hi:'#2a2a3a',ks:'#000',kl:'#c9c3ff'}, 'keycaps:gilded':{kt:'#3a2c10',hi:'#7a5a1e',ks:'#140e03',kl:'#ffe9a8'},
+  'ink:black':'#26221b', 'ink:navy':'#1d2f5c', 'ink:oxblood':'#6b1d1d', 'ink:violet':'#4b2a7a',
+  'paper:cream':'#f6f0e1', 'paper:onionskin':'#eef0ea', 'paper:ledger':'#e3eedf',
+};
+function applyWorkshopLook(){
+  const r = document.documentElement.style, k = WS_LOOK['keycaps:' + (Settings.keycaps || 'standard')];
+  if(k){ r.setProperty('--kt', k.kt); r.setProperty('--kt-hi', k.hi); r.setProperty('--ks', k.ks); r.setProperty('--kl', k.kl); }
+  r.setProperty('--sheet-ink', WS_LOOK['ink:' + (Settings.ink || 'black')] || '#26221b');
+  r.setProperty('--sheet', WS_LOOK['paper:' + (Settings.paper || 'cream')] || '#f6f0e1');
+  if(window.TC_TYPEWRITER && homeMachine && homeMachine.setSkin) homeMachine.setSkin(Settings.keycaps || 'standard');
+}
+function renderWorkshop(){
+  const xp = (Progress.view && Progress.view.xp) || 0, open = new Set(TC_RULES.unlocksFor(xp));
+  const body = document.getElementById('workshopBody'); body.className = 'workshop-body';
+  const preview = `<div class="ws-preview glass"><div class="ws-sheet"><span class="ws-typed">the quick brown fox</span><span class="ws-cur">j</span><span class="ws-rest">umps</span></div>
+    <div class="ws-keys">${'asdfjkl;'.split('').map(c => `<span class="ws-key${c==='j'?' next':''}"><b>${c}</b></span>`).join('')}</div></div>`;
+  body.innerHTML = preview + Object.entries(WS_KIND).map(([kind, label]) => `<section class="set-card"><h2>${label}</h2><div class="ws-items">` +
+    TC_RULES.WORKSHOP.filter(w => w.kind === kind).map(w => {
+      const id = w.id.split(':')[1], locked = !open.has(w.id), inUse = (Settings[kind] || TC_RULES.DEFAULT_SETTINGS[kind]) === id;
+      const look = WS_LOOK[w.id], sw = look ? (typeof look === 'string' ? look : look.kt) : 'var(--raise)';
+      return `<button class="ws-item${inUse?' in-use':''}" data-kind="${kind}" data-id="${id}" ${locked?'disabled':''} aria-pressed="${inUse}"><i style="background:${sw}"></i><span>${esc(w.name)}</span><small>${locked ? 'Unlocks at ' + esc(w.rank) : (inUse ? 'In use' : 'Use')}</small></button>`;
+    }).join('') + `</div></section>`).join('') + `<p class="lede">Background themes are free and live in Settings. Everything here is cosmetic and unlocked by rank: nothing is sold.</p>`;
+}
+document.getElementById('workshopView').addEventListener('click', (e) => {
+  const b = e.target.closest('.ws-item'); if(!b || b.disabled) return;
+  Settings[b.dataset.kind] = b.dataset.id; saveSettings(); applyWorkshopLook();
+  if(b.dataset.kind === 'keySound') applySoundLevel(b.dataset.id === 'off' ? 2 : b.dataset.id === 'soft' ? 1 : 0);
+  if(Account.user) api('PUT', '/api/user/settings', { settings: { keycaps:Settings.keycaps, ink:Settings.ink, paper:Settings.paper, keySound:Settings.keySound, bg:Settings.bg, effects:Settings.effects, dailyGoal:Settings.dailyGoal, fingerGuide:Settings.fingerGuide } });
+  renderWorkshop();
+});
+let homeMachine = null;
+
+/* ---- works offline: a service worker caches the app's own files (never /api) ---- */
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    const ready = (w) => { if(!w) return; w.addEventListener('statechange', () => { if(w.state === 'installed' && navigator.serviceWorker.controller) showUpdateReady(reg); }); };
+    if(reg.waiting && navigator.serviceWorker.controller) showUpdateReady(reg);
+    reg.addEventListener('updatefound', () => ready(reg.installing));
+  }).catch(() => {});
+  // reload only when the learner chose "Reload" (a first install also changes the controller)
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if(window.__tcUpdateChosen){ window.__tcUpdateChosen = false; location.reload(); } });
+}
+function showUpdateReady(reg){
+  const el = document.getElementById('toast');
+  el.innerHTML = 'Update ready. <button class="link-btn" id="updateReload">Reload</button>';
+  el.classList.remove('hidden');
+  document.getElementById('updateReload').addEventListener('click', () => { window.__tcUpdateChosen = true; if(reg.waiting) reg.waiting.postMessage('skipWaiting'); else location.reload(); });
+}
 window.addEventListener('beforeunload', saveKeyStats);
 
 /* ---- init ---- */
@@ -1995,6 +2049,7 @@ window.addEventListener('beforeunload', saveKeyStats);
   let savedSound = 0; try{ savedSound = parseInt(localStorage.getItem(SOUND_KEY)||'0', 10) || 0; }catch(e){}
   applySoundLevel(savedSound);
   applyFingerGuide(Settings.fingerGuide);
+  applyWorkshopLook();
   loadProgress(); loadStreak(); loadKeyStats(); loadAnalytics();
   homeView.style.display='flex'; lessonView.style.display='none';
   document.getElementById('funSelectView').style.display='none';

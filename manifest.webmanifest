@@ -1,0 +1,14 @@
+{
+  "name": "TypeCraft",
+  "short_name": "TypeCraft",
+  "description": "Learn to touch type: lessons, a coach and an arcade. Free, no ads.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#070b0a",
+  "theme_color": "#070b0a",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
