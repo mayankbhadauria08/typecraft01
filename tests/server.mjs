@@ -16,6 +16,8 @@ export function makeEnv(extra = {}) {
   const ASSETS = { fetch: async (req) => {
     const p = new URL(req.url).pathname;
     if (p === '/' || p === '/index.html') return new Response(readFileSync(path.join(root, 'index.html')), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    if (p === '/admin') return new Response(readFileSync(path.join(root, 'admin.html')), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    if (p === '/admin.html') return new Response(null, { status: 307, headers: { Location: '/admin' } });
     return new Response('Not found', { status: 404 });
   } };
   return { DB, ASSETS, EMAIL_FROM: '', ...extra };

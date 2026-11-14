@@ -49,12 +49,45 @@ Saving a secret applies it right away. Secrets are kept across deploys and never
 
 `onboarding@resend.dev` can only send to the email address of your own Resend account, which is all you need when TypeCraft is just for you. To send to anyone else, add and verify a domain you own in Resend, then set `EMAIL_FROM` to an address on it, such as `TypeCraft <no-reply@yourdomain.com>`.
 
+## 5. Upgrade the database for the next version (migration 0002)
+
+The next version saves every run, step and game as an event and works out every total (stars, best speed, XP, rank, streak, quests, badges) from them. Its tables come from [`migrations/0002_next.sql`](migrations/0002_next.sql). It only adds tables and indexes: nothing that exists today is changed or deleted, and it is safe to run twice. Run it **before** deploying the next version, and only after you have approved it.
+
+**With Node (recommended):**
+
+```sh
+npx wrangler d1 migrations apply typecraft --remote
+```
+
+Wrangler lists the migrations it will apply and asks before it changes anything. If 0001 was run by hand in the console, Wrangler may offer to apply it again too; that is harmless (it only creates tables that don't exist yet).
+
+**Without Node, in the D1 console** (Storage & Databases → D1 → typecraft → Console). The console breaks on `--` comments, so paste this single line instead of the file, then click **Execute**:
+
+```sql
+CREATE TABLE IF NOT EXISTS events (rid INTEGER PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, id TEXT NOT NULL, type TEXT NOT NULL, lesson_id TEXT, game_id TEXT, step INTEGER, kind TEXT, wpm REAL, accuracy REAL, errors INTEGER, seconds REAL, stars INTEGER, crown INTEGER NOT NULL DEFAULT 0, score INTEGER, xp INTEGER NOT NULL DEFAULT 0, day TEXT NOT NULL, hour INTEGER, device_at TEXT, server_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'app', data TEXT, UNIQUE (user_id, id)); CREATE INDEX IF NOT EXISTS events_user_order ON events (user_id, rid); CREATE INDEX IF NOT EXISTS events_user_lesson ON events (user_id, lesson_id, rid); CREATE INDEX IF NOT EXISTS events_server_at ON events (server_at); CREATE TABLE IF NOT EXISTS lesson_scores (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, lesson_id TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'not_started', step INTEGER NOT NULL DEFAULT 0, stars INTEGER NOT NULL DEFAULT 0, crown INTEGER NOT NULL DEFAULT 0, best_wpm REAL NOT NULL DEFAULT 0, best_accuracy REAL NOT NULL DEFAULT 0, attempts INTEGER NOT NULL DEFAULT 0, last_wpm REAL, last_accuracy REAL, last_played TEXT, completed_at TEXT, boss_won INTEGER NOT NULL DEFAULT 0, updated_at TEXT, PRIMARY KEY (user_id, lesson_id)); CREATE TABLE IF NOT EXISTS user_position (user_id TEXT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE, lesson_id TEXT NOT NULL, step INTEGER NOT NULL DEFAULT 0, device_at TEXT, server_at TEXT NOT NULL); CREATE TABLE IF NOT EXISTS stats_batches (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, id TEXT NOT NULL, token TEXT NOT NULL, at TEXT NOT NULL, PRIMARY KEY (user_id, id)); CREATE TABLE IF NOT EXISTS key_stats (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, k TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, errors INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, k)); CREATE TABLE IF NOT EXISTS bigram_stats (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, pair TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0, total_ms INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, pair)); CREATE TABLE IF NOT EXISTS error_classes (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, cls TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, cls)); CREATE TABLE IF NOT EXISTS daily_totals (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, day TEXT NOT NULL, seconds REAL NOT NULL DEFAULT 0, runs INTEGER NOT NULL DEFAULT 0, steps INTEGER NOT NULL DEFAULT 0, best_wpm REAL NOT NULL DEFAULT 0, acc_sum REAL NOT NULL DEFAULT 0, acc_count INTEGER NOT NULL DEFAULT 0, xp INTEGER NOT NULL DEFAULT 0, quests_done INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, day)); CREATE TABLE IF NOT EXISTS user_totals (user_id TEXT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE, rev TEXT NOT NULL, xp INTEGER NOT NULL DEFAULT 0, clean_tail INTEGER NOT NULL DEFAULT 0, streak_count INTEGER NOT NULL DEFAULT 0, streak_best INTEGER NOT NULL DEFAULT 0, streak_last TEXT, freezes TEXT NOT NULL DEFAULT '[]', updated_at TEXT, rebuilt_at TEXT); CREATE TABLE IF NOT EXISTS pipeline_guard (ok INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS xp_ledger (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, source TEXT NOT NULL, ref TEXT NOT NULL, xp INTEGER NOT NULL, day TEXT NOT NULL, at TEXT NOT NULL, PRIMARY KEY (user_id, source, ref)); CREATE TABLE IF NOT EXISTS daily_quests (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, day TEXT NOT NULL, quest_id TEXT NOT NULL, progress INTEGER NOT NULL DEFAULT 0, goal INTEGER NOT NULL, done_at TEXT, PRIMARY KEY (user_id, day, quest_id)); CREATE TABLE IF NOT EXISTS badges (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, badge_id TEXT NOT NULL, at TEXT NOT NULL, event_id TEXT, PRIMARY KEY (user_id, badge_id)); CREATE TABLE IF NOT EXISTS certificates (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, level INTEGER NOT NULL, wpm REAL NOT NULL, accuracy REAL NOT NULL, seconds REAL NOT NULL, lesson_id TEXT, event_id TEXT, at TEXT NOT NULL, PRIMARY KEY (user_id, level)); CREATE TABLE IF NOT EXISTS placement (user_id TEXT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE, level INTEGER NOT NULL, wpm REAL NOT NULL, accuracy REAL NOT NULL, seconds REAL NOT NULL, event_id TEXT, at TEXT NOT NULL); CREATE TABLE IF NOT EXISTS user_settings (user_id TEXT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE, value TEXT NOT NULL, updated_at TEXT NOT NULL); CREATE TABLE IF NOT EXISTS workshop_unlocks (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, item_id TEXT NOT NULL, at TEXT NOT NULL, PRIMARY KEY (user_id, item_id)); CREATE TABLE IF NOT EXISTS game_bests (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, game_id TEXT NOT NULL, best INTEGER NOT NULL DEFAULT 0, runs INTEGER NOT NULL DEFAULT 0, best_at TEXT, PRIMARY KEY (user_id, game_id)); CREATE TABLE IF NOT EXISTS ghost_replays (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, ghost_key TEXT NOT NULL, score REAL NOT NULL, replay TEXT NOT NULL CHECK (length(replay) <= 20480), at TEXT NOT NULL, PRIMARY KEY (user_id, ghost_key)); CREATE TABLE IF NOT EXISTS daily_results (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, day TEXT NOT NULL, score INTEGER NOT NULL DEFAULT 0, wpm REAL NOT NULL DEFAULT 0, accuracy REAL NOT NULL DEFAULT 0, event_id TEXT, at TEXT NOT NULL, PRIMARY KEY (user_id, day)); CREATE TABLE IF NOT EXISTS feedback (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, id TEXT NOT NULL, kind TEXT, rating INTEGER, text TEXT NOT NULL, page TEXT, at TEXT NOT NULL, PRIMARY KEY (user_id, id)); CREATE INDEX IF NOT EXISTS feedback_at ON feedback (at); CREATE TABLE IF NOT EXISTS guest_imports (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, import_id TEXT NOT NULL, lessons INTEGER NOT NULL DEFAULT 0, at TEXT NOT NULL, PRIMARY KEY (user_id, import_id)); CREATE TABLE IF NOT EXISTS event_rejects (user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, day TEXT NOT NULL, reason TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, day, reason)); CREATE INDEX IF NOT EXISTS event_rejects_day ON event_rejects (day); CREATE TABLE IF NOT EXISTS rebuild_runs (id INTEGER PRIMARY KEY, started_at TEXT NOT NULL, finished_at TEXT, users INTEGER NOT NULL DEFAULT 0, differences INTEGER NOT NULL DEFAULT 0, errors INTEGER NOT NULL DEFAULT 0); CREATE TABLE IF NOT EXISTS rebuild_diffs (run_id INTEGER NOT NULL, user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE, table_name TEXT NOT NULL, row_key TEXT NOT NULL, stored TEXT, rebuilt TEXT, at TEXT NOT NULL); CREATE INDEX IF NOT EXISTS rebuild_diffs_user ON rebuild_diffs (user_id); CREATE INDEX IF NOT EXISTS rebuild_diffs_run ON rebuild_diffs (run_id);
+```
+
+To check it worked: `SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;` now also lists `events`, `lesson_scores`, `daily_totals`, `user_totals`, `xp_ledger`, `badges` and the rest (33 tables in all).
+
+Existing accounts need nothing else: the first time a learner is seen after the upgrade, their saved runs, stars, best speeds, streak, key statistics and position are copied into the new tables automatically, and the old tables are left as they are.
+
+### The owner's health page
+
+`/admin` shows learners, active learners and runs today, refused or failed events, and the differences found by the nightly check (that number should be zero). Only the emails in the `OWNER_EMAILS` secret can open it; everyone else gets "Not found".
+
+In Cloudflare: **Workers & Pages → typecraft01 → Settings → Variables and Secrets → Add**, type **Secret**, name `OWNER_EMAILS`, value your TypeCraft sign-in email (several are separated by commas). Or: `npx wrangler secret put OWNER_EMAILS`.
+
+### The nightly check
+
+The Cron Trigger in `wrangler.jsonc` (21:17 UTC) cleans up expired sessions and then rebuilds every learner's totals from their saved events, compares them with the stored totals, corrects any difference and records it (`rebuild_runs`, `rebuild_diffs`). On the Workers Free plan a scheduled run gets very little CPU time; if the health page shows the rebuild as unfinished or with errors, the Paid plan's longer limit is the fix.
+
 ## Command-line alternative (if you install Node later)
 
 ```sh
 npx wrangler login
 npx wrangler d1 create typecraft                          # prints the database_id for wrangler.jsonc
-npx wrangler d1 migrations apply typecraft --remote       # creates the tables
+npx wrangler d1 migrations apply typecraft --remote       # creates the tables (0001, then 0002)
+npx wrangler secret put OWNER_EMAILS                      # who may open /admin
 npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put EMAIL_FROM
 npx wrangler deploy                                       # or push to main and let Workers Builds deploy
@@ -65,7 +98,7 @@ Local development (Node 22.13 or newer):
 ```sh
 npx wrangler d1 migrations apply typecraft --local
 npx wrangler dev                                          # http://localhost:8787 with a local D1
-node --test tests/api.test.mjs                            # API tests, no wrangler needed
+node --test tests/api.test.mjs tests/next.test.mjs        # API tests, no wrangler needed
 node tests/server.mjs 8788                                # the Worker on http://localhost:8788 with an in-memory database
 ```
 
@@ -79,7 +112,10 @@ For local email testing, create a file `.dev.vars` (it is git-ignored) containin
 | `src/index.js` | The Worker: `/api/*` routes, plus a daily clean-up of expired sessions and links. Everything else is served straight from `index.html`. |
 | `src/auth.js`, `src/account.js`, `src/progress.js` | Sign-in and passwords; profile and account deletion; learning progress. |
 | `src/session.js`, `src/http.js`, `src/crypto.js` | Sessions, rate limits, email, request checks, validation, password hashing. |
-| `migrations/` | The database tables (`0001_accounts.sql`). |
+| `src/pipeline.js`, `src/api.js`, `src/admin.js` | Next version: the event pipeline and nightly rebuild; the learner APIs; the owner's health numbers and `/admin`. |
+| `shared/rewards-rules.js` | Badges, daily quests, XP, streak freezes, certificates and Workshop unlocks: one set of rules for the browser and the server. |
+| `admin.html` | The owner's health page (served by the Worker to `OWNER_EMAILS` only). |
+| `migrations/` | The database tables (`0001_accounts.sql`, `0002_next.sql`). |
 | `tests/` | API tests and a local test server. `tests/d1-shim.mjs` stands in for D1 using Node's built-in SQLite. |
 | `wrangler.jsonc`, `.assetsignore`, `_headers` | Worker config; files kept private; security headers. |
 
@@ -104,6 +140,17 @@ All responses are JSON: `{ "ok": true, … }` or `{ "ok": false, "error": { "cod
 | `POST /api/user/progress/lesson-complete` | Record a finished run (idempotent by `eventId`) |
 | `PUT /api/user/progress/state` | Per-key accuracy, rhythm, coach tallies, streak |
 | `POST /api/user/progress/import` | Add guest progress to the account (once; never lowers anything) |
+| `GET /api/user/state` | Next version: everything the app needs at start (every lesson's scorecard, position, totals, XP and rank, streak, today's quests, badges, certificates, unlocks, settings, game bests, placement, typing statistics). `?today=YYYY-MM-DD` is the learner's local date |
+| `POST /api/user/events` | `{events:[…], today}`, at most 100. Each event has a browser-made `id`; ids already saved are ignored; invalid events are refused one by one (`sync.rejected`) and the rest saved. Answers with fresh state, `sync` and `awarded` |
+| `PUT /api/user/position` | `{lessonId, step}`: the lesson and step just opened or finished (latest by server time wins) |
+| `POST /api/user/stats` | `{id, keyStats, bigramLatency, errorClasses}`: counts to add (not totals); each batch id counts once |
+| `PUT /api/user/settings` | Theme, effects, sound, daily goal, finger guide, and Workshop items in use (only unlocked ones) |
+| `GET /api/user/lessons/:id` | One lesson's scorecard and every run |
+| `GET /api/user/history` | Daily totals (`?from=&to=`, default the last 400 days) |
+| `POST /api/user/import` | Guest progress: today's format or `events:[…]`; each import id once, the better result per lesson |
+| `GET /api/user/export` | All of the learner's data as a JSON download |
+| `GET /api/user/ghosts/:key` | A saved Ghost Race replay |
+| `GET /api/admin/health` | Owner only (`OWNER_EMAILS`) |
 
 ### Security
 
@@ -127,3 +174,11 @@ All responses are JSON: `{ "ok": true, … }` or `{ "ok": false, "error": { "cod
   - A lesson is **completed** once every stage is finished with at least 80% accuracy (1 star), the rule the dashboard already used. It never goes back.
   - Opening a lesson only marks it **in progress**.
   - Best WPM, accuracy and stars only ever go up.
+
+### How progress is saved in the next version
+
+- **Every write is an event** with an id made in the browser: `{ id, type:'step'|'run'|'game'|'quest'|'placement'|'feedback', at, tz, lessonId?, step?, kind?, gameId?, wpm, accuracy, errors, seconds, stars?, crown?, score?, xp? (games, 0–50), data?, ghost? }`. `tz` is minutes east of UTC (`-new Date().getTimezoneOffset()`); it decides the learner's local day (streak, quests, calendar) and hour (Early Bird, Night Owl). `step` is the 0-based index into the lesson's steps.
+- **The server checks every number** (speed 0–400, accuracy 0–100, seconds 0–7,200, a lesson id from `shared/course-meta.js`, a known game, game XP 0–50) and works out stars and crowns itself; a claim is never more than the numbers allow.
+- **One transaction per batch:** the new events, then lesson scores, daily totals, XP and its ledger, streak, quests, badges, certificates and game bests, with the rules in `shared/rewards-rules.js`. Counters are added in single statements. If two devices save at the same moment, the later batch starts again from the fresh totals, so nothing is lost and the best result per lesson wins.
+- **Today's routes keep working.** A run saved through `/api/user/progress/lesson-complete` is also saved as an event with the same id, so the old and new apps never count it twice; runs of lessons 1–24 from the new app also update the old lesson table.
+- **Every night** the totals are rebuilt from the events and compared with the stored ones (see step 5).

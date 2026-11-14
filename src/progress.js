@@ -3,6 +3,8 @@
 import { HttpError, json, readJson, fieldError, nowIso } from './http.js';
 import { requireSession } from './session.js';
 import { uuid } from './crypto.js';
+import { processEvents } from './pipeline.js';
+import { importCore, todayOf } from './api.js';
 
 // Lesson ids in teaching order. Keep in step with `lessons` in index.html
 // (ids never change; the order decides which lesson comes "next").
@@ -30,7 +32,7 @@ function eventIdOf(value) {
 const num = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.min(Math.round(Number(v)), 1e9) : 0);
 
 /** Rebuilds a state value from known fields only, so nothing unexpected is stored. */
-function cleanState(key, value) {
+export function cleanState(key, value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   if (key === 'keyStats') {
     const out = {};
@@ -169,6 +171,10 @@ export async function completeLesson(request, env) {
   const activityId = uuid();
   const now = nowIso();
 
+  // The same run in the new event pipeline, under the same id, so it is counted
+  // once however it arrives (this route, a retry, or the new app's events).
+  await processEvents(env, user.id, [{ id: eventId, type: 'run', lessonId, wpm, accuracy, errors, seconds, stars, at: now }], { legacy: true });
+
   // One transaction: the run is recorded, and the lesson row updated only if this
   // run's activity row was actually inserted (i.e. it isn't a retry of a saved run).
   await env.DB.batch([
@@ -293,5 +299,6 @@ export async function importGuest(request, env) {
     if (/UNIQUE/i.test(String(e && e.message))) return json({ imported: false, reason: 'already_imported' });
     throw e;
   }
+  await importCore(env, user.id, body, todayOf(null)); // the same guest progress in the new tables (once per import id)
   return json({ imported: true, lessons: lessonsImported });
 }

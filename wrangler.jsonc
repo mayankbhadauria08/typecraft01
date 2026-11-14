@@ -9,7 +9,8 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    // /admin is the owner-only health page: the Worker checks OWNER_EMAILS before serving admin.html
+    "run_worker_first": ["/api/*", "/admin", "/admin.html", "/admin/"]
   },
 
   // ACCOUNTS DATABASE (SETUP.md, step 2): the D1 database "typecraft".
@@ -23,12 +24,14 @@
     }
   ],
 
-  // Email settings (RESEND_API_KEY, EMAIL_FROM, optional APP_URL) are set as
-  // secrets in the Cloudflare dashboard, never in this file. keep_vars stops a
+  // Email settings (RESEND_API_KEY, EMAIL_FROM, optional APP_URL) and OWNER_EMAILS
+  // (comma-separated emails allowed to open /admin) are set as secrets in the
+  // Cloudflare dashboard, never in this file. keep_vars stops a
   // deploy from removing anything set there.
   "keep_vars": true,
 
-  // daily clean-up of expired sessions and links (02:47 India time)
+  // nightly (02:47 India time): clean-up of expired sessions and links, then the
+  // rebuild of every learner's totals from their saved events (src/pipeline.js)
   "triggers": { "crons": ["17 21 * * *"] },
   "observability": { "enabled": true }
 }
