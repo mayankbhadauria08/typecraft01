@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TypeCraft arcade - dev harness</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Design tokens and themes, copied from docs/design-preview.html */
+:root{
+  color-scheme:dark;
+  /* ink (dark) theme, the brand's first look */
+  --bg:#101716; --surface:#172120; --raise:#1e2a28;
+  --text:#ece7d9; --muted:#96a39e;
+  --line:rgba(236,231,217,.12); --line-strong:rgba(236,231,217,.26);
+  --teal:#5fd6c0; --teal-deep:#2e9a89; --teal-ink:#0b1514; --teal-soft:rgba(95,214,192,.13);
+  --brass:#e2b65f; --brass-ink:#201503; --brass-soft:rgba(226,182,95,.14);
+  --red:#ff7b6e; --red-soft:rgba(255,123,110,.16);
+  --shadow:rgba(0,0,0,.55);
+  /* physical objects keep their own colours in both themes */
+  --mach:#17322e; --mach-hi:#27544d; --mach-lo:#0a1715; --mach-text:#d9e6e1; --mach-muted:#8fb0a8; --mach-brass:#e2b65f;
+  --sheet:#f6f0e1; --sheet-ink:#26221b; --sheet-dry:#4b4437; --sheet-pending:#aaa08b; --sheet-meta:#7b725e; --sheet-red:#c23b2b; --sheet-teal:#0b6e63;
+  --odo-bg:#0a0d0c; --odo-fg:#f3ecd9;
+  --kt:#253532; --kt-hi:#364c46; --ks:#060b0a; --kl:#ece7d9; --kg:#5fd6c0;
+  --display:'Fraunces',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#f0ebdf; --surface:#faf7ef; --raise:#ffffff;
+    --text:#1f1c16; --muted:#645e51;
+    --line:rgba(48,40,22,.15); --line-strong:rgba(48,40,22,.32);
+    --teal:#0b6e63; --teal-deep:#07504a; --teal-ink:#faf7ef; --teal-soft:rgba(11,110,99,.11);
+    --brass:#8f6210; --brass-ink:#fff8e8; --brass-soft:rgba(143,98,16,.12);
+    --red:#bf3a2b; --red-soft:rgba(191,58,43,.12);
+    --shadow:rgba(70,52,20,.3);
+  }
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f0ebdf; --surface:#faf7ef; --raise:#ffffff;
+  --text:#1f1c16; --muted:#645e51;
+  --line:rgba(48,40,22,.15); --line-strong:rgba(48,40,22,.32);
+  --teal:#0b6e63; --teal-deep:#07504a; --teal-ink:#faf7ef; --teal-soft:rgba(11,110,99,.11);
+  --brass:#8f6210; --brass-ink:#fff8e8; --brass-soft:rgba(143,98,16,.12);
+  --red:#bf3a2b; --red-soft:rgba(191,58,43,.12);
+  --shadow:rgba(70,52,20,.3);
+}
+:root{--g1:rgba(95,214,192,.30);--g2:rgba(126,108,255,.28);--g3:rgba(226,182,95,.16);--glass:rgba(255,255,255,.04);--glass-2:rgba(255,255,255,.09);--glass-line:rgba(255,255,255,.15);--grid:rgba(95,214,192,.16);--violet:#a594ff;--deep:rgba(0,0,0,.8)}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--g1:rgba(11,110,99,.22);--g2:rgba(104,84,220,.18);--g3:rgba(190,140,40,.18);--glass:rgba(255,255,255,.55);--glass-2:rgba(255,255,255,.9);--glass-line:rgba(48,40,22,.16);--grid:rgba(11,110,99,.14);--violet:#5a45c8;--deep:rgba(70,52,20,.4)}}
+:root[data-theme="light"]{--g1:rgba(11,110,99,.22);--g2:rgba(104,84,220,.18);--g3:rgba(190,140,40,.18);--glass:rgba(255,255,255,.55);--glass-2:rgba(255,255,255,.9);--glass-line:rgba(48,40,22,.16);--grid:rgba(11,110,99,.14);--violet:#5a45c8;--deep:rgba(70,52,20,.4)}
+:root[data-bg]{color-scheme:dark}
+:root[data-bg="neon"]{--bg:#0b0618;--surface:#150b2b;--raise:#1d1038;--text:#f5eeff;--muted:#ac9fcc;--teal:#ff5fd2;--teal-deep:#b3308f;--teal-ink:#1c0424;--teal-soft:rgba(255,95,210,.14);--violet:#4de3ff;--g1:rgba(255,95,210,.34);--g2:rgba(77,227,255,.26);--g3:rgba(140,80,255,.30);--grid:rgba(255,95,210,.45);--mach:#2a1650;--mach-hi:#4b2b88;--mach-lo:#10071f;--mach-muted:#b9a6e8}
+:root[data-bg="space"]{--bg:#04060d;--surface:#0c1120;--raise:#131a2e;--text:#eaf1ff;--muted:#93a1bd;--teal:#8fc7ff;--teal-deep:#3f78c4;--teal-ink:#06101f;--teal-soft:rgba(143,199,255,.14);--violet:#b69cff;--g1:rgba(80,130,255,.26);--g2:rgba(150,90,255,.24);--g3:rgba(60,200,255,.12);--mach:#1b2740;--mach-hi:#2f4470;--mach-lo:#090e1a;--mach-muted:#9db3d9}
+:root[data-bg="sunset"]{--bg:#170b10;--surface:#22111a;--raise:#2c1722;--text:#fff0e6;--muted:#c4a39b;--teal:#ff9d5c;--teal-deep:#c2622a;--teal-ink:#2a0f02;--teal-soft:rgba(255,157,92,.15);--violet:#ff5e8a;--brass:#ffd166;--g1:rgba(255,140,70,.34);--g2:rgba(255,80,130,.28);--g3:rgba(255,200,90,.22);--grid:rgba(255,150,90,.26);--mach:#4a1f2a;--mach-hi:#7a3442;--mach-lo:#1c0a10;--mach-muted:#e0b0a8}
+:root[data-bg="ocean"]{--bg:#03121a;--surface:#082029;--raise:#0d2b36;--text:#e6fbff;--muted:#8fb4bd;--teal:#4fe0e6;--teal-deep:#1c98a3;--teal-ink:#021418;--teal-soft:rgba(79,224,230,.14);--violet:#6aa2ff;--g1:rgba(60,220,230,.28);--g2:rgba(60,120,255,.28);--g3:rgba(40,255,200,.14);--mach:#0f3440;--mach-hi:#1d5868;--mach-lo:#061a21;--mach-muted:#9fd0d8}
+:root[data-bg="letters"]{--bg:#070b0a;--surface:#101716;--raise:#172120;--g1:rgba(95,214,192,.20);--g2:rgba(126,108,255,.14);--g3:rgba(226,182,95,.10)}
+:root[data-bg="gold"]{--bg:#0c0a07;--surface:#17140e;--raise:#201c14;--text:#f6eedb;--muted:#a99f88;--teal:#e9c46a;--teal-deep:#9c7a2b;--teal-ink:#221703;--teal-soft:rgba(233,196,106,.14);--violet:#fff1c9;--brass:#f0975a;--brass-ink:#2a1002;--brass-soft:rgba(240,151,90,.14);--g1:rgba(233,196,106,.26);--g2:rgba(240,150,90,.18);--g3:rgba(255,235,170,.12);--grid:rgba(233,196,106,.20);--mach:#262219;--mach-hi:#463e2c;--mach-lo:#0b0a07;--mach-muted:#c9bb96}
+
+/* harness page only */
+*{box-sizing:border-box}
+body{margin:0;background-color:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:"";position:fixed;inset:-25%;z-index:0;pointer-events:none;background:radial-gradient(38% 34% at 22% 22%,var(--g1),transparent 70%),radial-gradient(34% 34% at 80% 16%,var(--g2),transparent 70%),radial-gradient(44% 40% at 55% 88%,var(--g3),transparent 70%);filter:blur(40px);animation:aurora 16s ease-in-out infinite alternate}
+@keyframes aurora{to{transform:translate3d(5%,-4%,0) rotate(10deg) scale(1.1)}}
+:root[data-fx="light"] body::before{animation:none}
+:root[data-fx="off"] body::before{animation:none;filter:none}
+.wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:18px max(14px,env(safe-area-inset-left,0px)) 60px;display:flex;flex-direction:column;gap:22px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;padding:10px 14px;border:1px solid var(--glass-line);border-radius:18px;background:linear-gradient(160deg,var(--glass-2),var(--glass));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.brand{font:600 22px/1 var(--display);letter-spacing:-.02em;margin:0}
+.brand em{color:var(--teal);font-style:italic}
+.ctl{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;font:500 12px/1.2 var(--mono);color:var(--muted)}
+.ctl label{display:flex;gap:6px;align-items:center}
+.ctl select,.ctl button{font:500 12px/1.2 var(--mono);color:var(--text);background:var(--surface);border:1px solid var(--line-strong);border-radius:999px;padding:5px 10px}
+h1{margin:0;font:560 clamp(30px,5vw,48px)/1.08 var(--display);letter-spacing:-.02em;background:linear-gradient(100deg,var(--text) 18%,var(--teal) 58%,var(--violet) 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{margin:4px 0 0;color:var(--muted);max-width:64ch}
+#log{margin:0;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--glass);font:12px/1.45 var(--mono);color:var(--muted);white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto}
+[hidden]{display:none!important}
+</style>
+<link rel="stylesheet" href="css/games.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="brand">type<em>craft</em> arcade</p>
+    <div class="ctl">
+      <label>Theme <select id="theme">
+        <option value="aurora">Aurora</option><option value="letters">Floating letters</option><option value="neon">Neon grid</option>
+        <option value="space">Deep space</option><option value="sunset">Sunset</option><option value="ocean">Ocean</option>
+        <option value="gold">Black and gold</option><option value="paper">Paper</option></select></label>
+      <label>Effects <select id="fx"><option value="full">Full</option><option value="light">Light</option><option value="off">Off</option></select></label>
+      <label>Keys learned <select id="keys">
+        <option value="home">Home row</option><option value="top">Home + top row</option><option value="all">All letters, numbers, symbols</option></select></label>
+      <label><input type="checkbox" id="snd"> Sound</label>
+      <button type="button" id="reset">Clear saved data</button>
+    </div>
+  </header>
+
+  <section id="arcade">
+    <h1>Arcade</h1>
+    <p class="lede">Dev harness for <code>js/games/*.js</code>. Every game uses a fake ctx built from the keys chosen above. Ghost runs, bests and Daily results live in localStorage.</p>
+    <div style="height:16px"></div>
+    <div class="tcg-daily" id="daily">
+      <div><h3>Daily Challenge</h3><p id="dailyNote">One passage a day. Your first finished run counts.</p></div>
+      <button type="button" class="tcg-btn" id="dailyGo">Play today</button>
+    </div>
+    <div style="height:16px"></div>
+    <div class="tcg-cards" id="cards"></div>
+  </section>
+
+  <section id="play" hidden></section>
+  <pre id="log" aria-label="Last onEnd payload">onEnd payloads appear here.</pre>
+</div>
+
+<script src="js/games/core.js"></script>
+<script src="js/games/storm.js"></script>
+<script src="js/games/beat.js"></script>
+<script src="js/games/tug.js"></script>
+<script src="js/games/ghost.js"></script>
+<script src="js/games/pop.js"></script>
+<script src="js/games/tower.js"></script>
+<script src="js/games/safe.js"></script>
+<script src="js/games/boss.js"></script>
+<script src="js/games/daily.js"></script>
+<script>
+(function(){
+  'use strict';
+  var G = window.TC_GAMES, root = document.documentElement;
+  var $ = function(s){ return document.querySelector(s); };
+  var PRESETS = {
+    home: { chars: 'asdfghjkl;', digits: false, symbols: '',
+      words: 'a as ask asks add adds all alas dad dads fad fads fall falls flask gag gal gall gash glad glass had has hall half jag lad lads lag lash sad sag salad shall slag flag flash dash gas hag'.split(' ') },
+    top: { chars: 'asdfghjkl;eirtwoupyq', digits: false, symbols: '',
+      words: 'the that this with they their there were where what write white quite tower water power report sugar ready story right three great type fruit stage paper title hold food would yellow photo forty party pretty sorry'.split(' ') },
+    all: { chars: 'abcdefghijklmnopqrstuvwxyz0123456789;,./#$%&*-+=', digits: true, symbols: ';,./#$%&*-+=',
+      words: 'between keyboard practice journey zebra quickly mixture jacket velvet wizard bronze oxygen puzzle fixed movie crazy brave quiet number dozen jumping vivid exact black value'.split(' ') }
+  };
+  var BOSSES = [
+    { id: 'l16', title: 'Boss: Home row', words: { phase1: 'as ad all add sad lad fad has'.split(' '), phase2: 'flask glass salad shall flash'.split(' '), phase3: 'flasks salads glasses'.split(' ') } },
+    { id: 'l28', title: 'Boss: Top row', words: { phase1: 'the we it or up to'.split(' '), phase2: 'tower water quite trope'.split(' '), phase3: 'typewriter repertoire'.split(' ') } }
+  ];
+  var DAILY_TEXTS = [
+    'A quiet desk, a warm cup of tea and a steady rhythm on the keys make a good start to the day.',
+    'The old typewriter rang its little bell at the end of every line, and the paper rolled up one more step.',
+    'Practice is not about speed at first. It is about calm hands that know where every key lives.',
+    'Rain tapped on the window while she typed, and soon the two rhythms seemed to keep time together.',
+    'Small steps every day add up. Ten careful minutes beat an hour of rushing and guessing.'
+  ];
+  function store(k, v){ try{ if(v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+
+  /* sound: tiny Web Audio beeps */
+  var ac = null;
+  function sound(name){
+    if(!$('#snd').checked) return;
+    try{
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      var f = { key: 520, error: 160, ding: 880, win: 660, lose: 220, pop: 740, tick: 1200 }[name] || 440;
+      var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+      o.frequency.value = f; o.type = name === 'error' ? 'square' : 'sine';
+      g.gain.setValueAtTime(name === 'key' ? 0.03 : 0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + (name === 'win' ? 0.4 : 0.09));
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.42);
+    }catch(e){}
+  }
+
+  /* settings */
+  function setTheme(v){
+    root.removeAttribute('data-bg'); root.removeAttribute('data-theme');
+    if(v === 'paper') root.setAttribute('data-theme', 'light');
+    else { root.setAttribute('data-theme', 'dark'); if(v !== 'aurora') root.setAttribute('data-bg', v); }
+  }
+  var params = new URLSearchParams(location.search);
+  ['theme', 'fx', 'keys'].forEach(function(k){ var v = params.get(k) || store('tcDev:' + k); if(v && $('#' + k).querySelector('option[value="' + v + '"]')) $('#' + k).value = v; });
+  setTheme($('#theme').value); root.setAttribute('data-fx', $('#fx').value);
+  $('#theme').addEventListener('change', function(){ store('tcDev:theme', this.value); setTheme(this.value); if(current) remount(); });
+  $('#fx').addEventListener('change', function(){ store('tcDev:fx', this.value); root.setAttribute('data-fx', this.value); if(current) remount(); });
+  $('#keys').addEventListener('change', function(){ store('tcDev:keys', this.value); if(current) remount(); });
+  $('#reset').addEventListener('click', function(){
+    Object.keys(localStorage).filter(function(k){ return k.indexOf('tcDev') === 0 && k.indexOf('tcDev:') !== 0; }).forEach(function(k){ localStorage.removeItem(k); });
+    renderCards(); log('Cleared bests, ghosts and daily history.');
+  });
+
+  function log(x){ $('#log').textContent = typeof x === 'string' ? x : JSON.stringify(x, null, 1); }
+  function bests(){ return store('tcDevBest') || {}; }
+
+  function makeCtx(id){
+    var p = PRESETS[$('#keys').value] || PRESETS.home;
+    return {
+      words: p.words.slice(), chars: p.chars, digits: p.digits, symbols: p.symbols,
+      best: bests()[id] != null ? bests()[id] : null, effects: $('#fx').value, sound: sound,
+      bosses: $('#keys').value === 'home' ? BOSSES.slice(0, 1) : BOSSES.slice(),
+      loadGhost: function(k){ return store('tcDevGhost:' + k); },
+      saveGhost: function(k, obj){ var s = JSON.stringify(obj); if(s.length > 20480) throw new Error('ghost too big'); localStorage.setItem('tcDevGhost:' + k, s); },
+      onEnd: function(r){
+        log(Object.assign({ game: id }, r));
+        var b = bests(); if(typeof r.score === 'number' && (b[id] == null || r.score > b[id])){ b[id] = r.score; store('tcDevBest', b); }
+      },
+      onBack: back
+    };
+  }
+  var current = null, handle = null;
+  function mountGame(id){
+    var play = $('#play');
+    if(handle){ handle.destroy(); handle = null; }
+    $('#arcade').hidden = true; play.hidden = false; current = id;
+    if(id === 'daily'){
+      var hist = store('tcDevDaily') || [], date = G.daily.today();
+      var ctx = makeCtx('daily');
+      ctx.texts = DAILY_TEXTS; ctx.date = date; ctx.history = hist; ctx.done = hist.some(function(h){ return h.date === date; });
+      var onEnd = ctx.onEnd;
+      ctx.onEnd = function(r){ onEnd(r); if(r.counted){ var h = store('tcDevDaily') || []; h.push({ date: r.date, wpm: r.stats.wpm, accuracy: r.stats.accuracy }); store('tcDevDaily', h); } };
+      handle = G.daily.mount(play, ctx);
+    } else {
+      var gctx = makeCtx(id);
+      if(id === 'boss' && params.get('lesson')) gctx.bossLesson = BOSSES[0]; /* course mode, as a boss lesson mounts it */
+      handle = G.get(id).mount(play, gctx);
+      window.__game = handle;
+    }
+    window.scrollTo(0, 0);
+  }
+  function remount(){ if(current) mountGame(current); }
+  function back(){ if(handle){ handle.destroy(); handle = null; } current = null; $('#play').hidden = true; $('#arcade').hidden = false; renderCards(); }
+
+  function renderCards(){
+    var b = bests(), wrap = $('#cards'); wrap.innerHTML = '';
+    G.ORDER.map(G.get).filter(Boolean).forEach(function(g){
+      var card = document.createElement('button'); card.type = 'button'; card.className = 'tcg-card'; card.setAttribute('data-accent', g.accent || 'teal');
+      card.setAttribute('aria-label', g.title + '. ' + g.blurb);
+      card.innerHTML = g.scene + '<div class="tcg-card-body"><div class="tcg-card-top"><h3>' + g.title + '</h3><span class="tcg-card-best">Best <b>' + (b[g.id] != null ? b[g.id] : '-') + '</b></span></div>' +
+        '<p>' + g.blurb + '</p><div class="tcg-trains"><span>Trains</span>' + g.trains + '</div></div>';
+      card.addEventListener('click', function(){ mountGame(g.id); });
+      card.addEventListener('pointermove', function(e){
+        if(root.getAttribute('data-fx') !== 'full' || (e.pointerType && e.pointerType !== 'mouse')) return;
+        var r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        card.style.setProperty('--tcg-ry', ((x - 0.5) * 10).toFixed(2) + 'deg'); card.style.setProperty('--tcg-rx', ((0.5 - y) * 8).toFixed(2) + 'deg');
+        card.style.setProperty('--tcg-gx', (x * 100).toFixed(0) + '%'); card.style.setProperty('--tcg-gy', (y * 100).toFixed(0) + '%'); card.style.setProperty('--tcg-go', 1);
+      });
+      card.addEventListener('pointerleave', function(){ card.style.setProperty('--tcg-rx', '0deg'); card.style.setProperty('--tcg-ry', '0deg'); card.style.setProperty('--tcg-go', 0); });
+      wrap.appendChild(card);
+    });
+    var hist = store('tcDevDaily') || [], today = G.daily.today(), done = hist.some(function(h){ return h.date === today; });
+    $('#dailyNote').textContent = done ? 'Today is counted. You can still practise the passage.' : 'One passage a day. Your first finished run counts.';
+    $('#dailyGo').textContent = done ? 'Practise today' : 'Play today';
+  }
+  $('#dailyGo').addEventListener('click', function(){ mountGame('daily'); });
+  renderCards();
+  if(params.get('game')) mountGame(params.get('game'));
+})();
+</script>
+</body>
+</html>
