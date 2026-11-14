@@ -2,7 +2,7 @@
 // settings, lesson scorecards, history, guest import, export and ghost replays.
 // Signed-in only; the user id always comes from the session.
 import { HttpError, json, readJson, fieldError, nowIso } from './http.js';
-import { requireSession } from './session.js';
+import { requireSession, hitLimit, tooMany } from './session.js';
 import { uuid } from './crypto.js';
 import { cleanState } from './progress.js';
 import { META, RULES, loadStored, rowsToState, ensureUser, processEvents } from './pipeline.js';
@@ -280,6 +280,22 @@ export async function postImport(request, env) {
   const today = todayOf(body.today);
   const r = await importCore(env, user.id, body, today);
   return json({ ...r, ...(await buildState(env, user.id, today)) });
+}
+
+/* ---------------- POST /api/user/reset ---------------- */
+// Progress only: the account, sign-in, look settings, feedback and the admin logs stay.
+// guest_imports stays too, so the same browser progress can't be imported again by accident.
+export const RESET_TABLES = ['events', 'lesson_scores', 'user_position', 'stats_batches', 'key_stats', 'bigram_stats', 'error_classes',
+  'daily_totals', 'user_totals', 'xp_ledger', 'daily_quests', 'badges', 'certificates', 'placement', 'workshop_unlocks', 'game_bests',
+  'ghost_replays', 'daily_results', 'user_learning_progress', 'user_activity', 'user_state'];
+/** Clears the learner's own progress. The body must say { confirm: "RESET" }. */
+export async function postReset(request, env) {
+  const { user } = await requireSession(env, request);
+  const body = await readJson(request);
+  if (body.confirm !== 'RESET') throw fieldError({ confirm: 'Type RESET to confirm.' });
+  if (!(await hitLimit(env, `reset:${user.id}`, 5, 3600))) throw tooMany(60);
+  await env.DB.batch(RESET_TABLES.map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE user_id = ?1`).bind(user.id)));
+  return json({ reset: true, ...(await buildState(env, user.id, todayOf(body.today))) });
 }
 
 /* ---------------- GET /api/user/export ---------------- */

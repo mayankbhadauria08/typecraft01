@@ -3,20 +3,20 @@
 Questions, blockers and decisions taken while you slept. Newest at the bottom of each section.
 
 ## Decisions taken for you (change any of them)
-- Built on `main` without the sign-in gate (PR #4): the build prompt and the preview both say the app works without an account. PR #4 is left open; close it if you agree.
+- Built on `main` without the sign-in gate: the build prompt and the preview both say the app works without an account. PR #4 closed (14 Nov).
 - New lessons get ids l25–l78 in the order the build prompt lists them (`shared/course-meta.js`).
 - Testing is light, as you asked: page loads without errors, key flows once, and the allowed-characters check.
 
 ## Questions for the morning
 - Rank chip in the top bar stays hidden until XP exists (joined in with the server part), so it never shows a made-up number.
-- Reset progress resets this browser only for now; resetting an account's data needs a server route (not in the prompt's API list). Add `POST /api/user/reset`?
+- Decided (14 Nov): `POST /api/user/reset` added. Signed-in learners can reset their progress on every device by typing RESET; the account, sign-in, look settings, feedback and admin logs stay.
 
 ## Blockers
 - None so far. Cloudflare's `wrangler` can't be installed in this workspace, so the Worker was tested with a local stand-in (Node + SQLite), not on Cloudflare itself.
 
 ## Known rough edges (to tidy after your review)
 - Fixed: badge ids on the Progress page now match the rules (16 were named differently); the "practise 10 minutes" quest shows minutes.
-- In lessons a wrong key now waits for the right one (as on the design's typewriter): the error still counts against accuracy, but the caret doesn't move on. Today's app moved on past mistakes. Say if you want the old way back.
+- Decided (14 Nov): on practice steps a wrong key waits for the right one (the error still counts); on Challenge, Timed, Sprint and Exam steps the caret moves on past mistakes, as a real speed test does.
 - Placement result and the speed on the very first key of a run can read oddly (e.g. a huge wpm after one key) — today's app does the same.
 - Ghost replays are kept in this browser only (not yet sent with game events).
 

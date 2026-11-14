@@ -43,6 +43,7 @@ const ROUTES = {
   'GET /api/user/history': api.getHistory,
   'POST /api/user/import': api.postImport,
   'GET /api/user/export': api.getExport,
+  'POST /api/user/reset': api.postReset,
   'GET /api/admin/health': admin.getHealth,
 };
 // routes with a parameter in the path

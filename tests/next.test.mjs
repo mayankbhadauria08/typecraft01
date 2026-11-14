@@ -317,3 +317,16 @@ test('the migrations can be run twice without harm', async () => {
   db.applyMigrations(dir);
   assert.ok(await db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'events'").first());
 });
+
+test('reset: needs RESET; clears progress, keeps the account', async () => {
+  const a = await signup('reset@example.com');
+  await send(a, [run('l1')]);
+  assert.ok((await stateOf(a)).xp > 0);
+  assert.equal((await a('POST', '/api/user/reset', { confirm: 'reset' })).status, 400);
+  const r = await a('POST', '/api/user/reset', { confirm: 'RESET', today });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.xp, 0);
+  assert.notEqual(r.body.lessons.l1 && r.body.lessons.l1.status, 'completed');
+  const b = await signin('reset@example.com');
+  assert.equal((await stateOf(b)).xp, 0);
+});

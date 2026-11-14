@@ -25,6 +25,7 @@ function lessonNumber(lesson){ const m = TC_META.BY_ID[lesson.id]; return m ? m.
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[randInt(0, arr.length-1)]; }
 const STEP_LABEL = TC_COURSE.STEP_LABEL;
+const FLOW_STEPS = new Set(['challenge', 'timed', 'sprint', 'exam']);
 function getStagesForLesson(lesson){
   if(lesson.isReview) return (lesson.wordDrill && lesson.wordDrill.length) ? ['character','word'] : ['character'];
   if(lesson.isPlacement) return ['timed'];
@@ -382,11 +383,12 @@ function handleKeydown(e){
   else{
     errorCount++; playSound('incorrect');
     if(stages[currentStage] === 'lock'){ lockBack(); if(lessonMachine){ lessonMachine.pressKey(inputChar, false); lessonMachine.setPosition(currentIndex, { wrong:true }); } return; }
-    // a slip turns the key and the letter red; the caret waits for the right key
-    if(lessonMachine){ lessonMachine.pressKey(inputChar, false); lessonMachine.setPosition(currentIndex, { wrong:true }); updateStatsDisplay(); return; }
+    // practice: a slip turns the key and the letter red and the caret waits for the right key.
+    // Challenge, timed, sprint and exam steps measure real speed, so they move on past mistakes.
+    if(lessonMachine && !FLOW_STEPS.has(stages[currentStage])){ lessonMachine.pressKey(inputChar, false); lessonMachine.setPosition(currentIndex, { wrong:true }); updateStatsDisplay(); return; }
     letters[currentIndex].className='letter incorrect';
   }
-  if(isCorrect && lessonMachine) lessonMachine.pressKey(inputChar, true);
+  if(lessonMachine) lessonMachine.pressKey(inputChar, isCorrect);
 
   currentIndex++; updateCaretPosition(); updateStatsDisplay(); updateCarriage(); updateFingerGuide();
   if(lessonMachine) lessonMachine.setPosition(currentIndex);
@@ -1967,24 +1969,38 @@ document.querySelectorAll('#setGoal button').forEach(b=>b.addEventListener('clic
 document.querySelectorAll('#setGuide button').forEach(b=>b.addEventListener('click',()=>applyFingerGuide(b.dataset.v==='on')));
 document.getElementById('soundToggle').addEventListener('click', () => { applySoundLevel((soundLevel+1) % SOUND_LEVELS.length); paintThemeControls(); });
 
-/* reset progress, confirmed by typing RESET (this browser's data; account data is reset through the server in a later phase) */
+/* reset progress, confirmed by typing RESET: this browser's data, or (signed in) the account's progress on the server */
 const resetInput=document.getElementById('resetInput'), resetBtn=document.getElementById('resetBtn');
-resetInput.addEventListener('input', ()=>{ resetBtn.disabled = resetInput.value.trim()!=='RESET' || !!Account.user; });
-resetBtn.addEventListener('click', ()=>{
-  if(resetInput.value.trim()!=='RESET' || Account.user) return;
-  ['typingMasterProgress','typingMasterStreak','typingMasterKeyStats','typingMasterBigramLatency','typingMasterErrorClasses','typingMasterPosition']
-    .forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-  resetInput.value=''; resetBtn.disabled=true;
-  loadProgress(); loadStreak(); loadKeyStats(); loadAnalytics();
-  const m=document.getElementById('resetMsg'); m.textContent='Progress in this browser has been reset.'; m.classList.remove('error');
+const RESET_KEYS = ['typingMasterProgress','typingMasterStreak','typingMasterKeyStats','typingMasterBigramLatency','typingMasterErrorClasses','typingMasterPosition', EVENTS_KEY, PLACEMENT_KEY, GHOST_KEY];
+resetInput.addEventListener('input', ()=>{ resetBtn.disabled = resetInput.value.trim()!=='RESET'; });
+resetBtn.addEventListener('click', async ()=>{
+  if(resetInput.value.trim()!=='RESET') return;
+  const m=document.getElementById('resetMsg');
+  resetBtn.disabled=true;
+  if(Account.user){
+    // runs still waiting to be sent would bring the old progress back, so they go first
+    Sync.queue = Sync.queue.filter(q => q === Sync.inFlight || q.kind === 'position'); Sync.persist();
+    const res = await api('POST', '/api/user/reset', { confirm:'RESET', today:localDay() });
+    if(!res.ok){ m.textContent = (res.error && res.error.message) || 'The reset didn\u2019t go through. Try again.'; m.classList.add('error'); resetBtn.disabled=false; return; }
+    RESET_KEYS.forEach(k=>{ delete Account.data[k]; try{ localStorage.removeItem(k); }catch(e){} }); saveAccountCache();
+    applyServerState(res);
+    m.textContent='Your account\u2019s progress has been reset on every device.';
+  } else {
+    RESET_KEYS.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+    m.textContent='Progress in this browser has been reset.';
+  }
+  resetInput.value='';
+  if(!Account.user) rebuildGuestProgress();
+  reloadLearningState(); renderRewardBits();
+  m.classList.remove('error');
 });
 function renderSettingsPage(){
   paintThemeControls();
   const signedIn=!!Account.user;
   document.getElementById('resetText').innerHTML = signedIn
-    ? 'Resetting an account’s saved progress arrives with the new server. For now, progress saved in your account stays as it is.'
+    ? 'Clears every lesson, star, XP, badge, streak and statistic in your account, on every device. Your account, sign-in and look settings stay. This can’t be undone. Type <b>RESET</b> to confirm.'
     : 'Clears every lesson, star, streak and statistic saved in this browser. This can’t be undone. Type <b>RESET</b> to confirm.';
-  resetBtn.disabled = true; resetInput.disabled = signedIn;
+  resetBtn.disabled = true; resetInput.disabled = false;
 }
 document.getElementById('navLearn').addEventListener('click', backToDashboard);
 document.getElementById('navSettings').addEventListener('click', ()=>{ openPage('settingsView'); renderSettingsPage(); });

@@ -149,6 +149,7 @@ All responses are JSON: `{ "ok": true, … }` or `{ "ok": false, "error": { "cod
 | `GET /api/user/history` | Daily totals (`?from=&to=`, default the last 400 days) |
 | `POST /api/user/import` | Guest progress: today's format or `events:[…]`; each import id once, the better result per lesson |
 | `GET /api/user/export` | All of the learner's data as a JSON download |
+| `POST /api/user/reset` | Clears the learner's progress (body `{ "confirm": "RESET" }`); the account stays |
 | `GET /api/user/ghosts/:key` | A saved Ghost Race replay |
 | `GET /api/admin/health` | Owner only (`OWNER_EMAILS`) |
 
