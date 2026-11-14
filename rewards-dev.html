@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en" data-bg="letters" data-fx="full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TypeCraft rewards UI: dev harness</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Tokens copied from docs/design-preview.html (base :root, glass pass, themes).
+   In the app these live in css/app.css. Paper = the preview's light values. */
+:root{
+  color-scheme:dark;
+  --bg:#101716; --surface:#172120; --raise:#1e2a28;
+  --text:#ece7d9; --muted:#96a39e;
+  --line:rgba(236,231,217,.12); --line-strong:rgba(236,231,217,.26);
+  --teal:#5fd6c0; --teal-deep:#2e9a89; --teal-ink:#0b1514; --teal-soft:rgba(95,214,192,.13);
+  --brass:#e2b65f; --brass-ink:#201503; --brass-soft:rgba(226,182,95,.14);
+  --red:#ff7b6e; --red-soft:rgba(255,123,110,.16);
+  --mach:#17322e; --mach-hi:#27544d; --mach-lo:#0a1715; --mach-text:#d9e6e1; --mach-muted:#8fb0a8; --mach-brass:#e2b65f;
+  --sheet:#f6f0e1; --sheet-ink:#26221b;
+  --display:'Fraunces',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --g1:rgba(95,214,192,.30);--g2:rgba(126,108,255,.28);--g3:rgba(226,182,95,.16);--glass:rgba(255,255,255,.04);--glass-2:rgba(255,255,255,.09);--glass-line:rgba(255,255,255,.15);--violet:#a594ff;--deep:rgba(0,0,0,.8)
+}
+:root[data-bg="letters"]{--bg:#070b0a;--surface:#101716;--raise:#172120;--g1:rgba(95,214,192,.20);--g2:rgba(126,108,255,.14);--g3:rgba(226,182,95,.10)}
+:root[data-bg="neon"]{--bg:#0b0618;--surface:#150b2b;--raise:#1d1038;--text:#f5eeff;--muted:#ac9fcc;--teal:#ff5fd2;--teal-deep:#b3308f;--teal-ink:#1c0424;--teal-soft:rgba(255,95,210,.14);--violet:#4de3ff;--g1:rgba(255,95,210,.34);--g2:rgba(77,227,255,.26);--g3:rgba(140,80,255,.30);--mach:#2a1650;--mach-hi:#4b2b88;--mach-lo:#10071f;--mach-muted:#b9a6e8}
+:root[data-bg="paper"]{color-scheme:light;
+  --bg:#f0ebdf; --surface:#faf7ef; --raise:#ffffff;
+  --text:#1f1c16; --muted:#645e51;
+  --line:rgba(48,40,22,.15); --line-strong:rgba(48,40,22,.32);
+  --teal:#0b6e63; --teal-deep:#07504a; --teal-ink:#faf7ef; --teal-soft:rgba(11,110,99,.11);
+  --brass:#8f6210; --brass-ink:#fff8e8; --brass-soft:rgba(143,98,16,.12);
+  --red:#bf3a2b; --red-soft:rgba(191,58,43,.12);
+  --g1:rgba(11,110,99,.22);--g2:rgba(104,84,220,.18);--g3:rgba(190,140,40,.18);--glass:rgba(255,255,255,.55);--glass-2:rgba(255,255,255,.9);--glass-line:rgba(48,40,22,.16);--violet:#5a45c8;--deep:rgba(70,52,20,.4)}
+
+/* harness page chrome */
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:-25%;z-index:0;pointer-events:none;background:radial-gradient(38% 34% at 22% 22%,var(--g1),transparent 70%),radial-gradient(34% 34% at 80% 16%,var(--g2),transparent 70%),radial-gradient(44% 40% at 55% 88%,var(--g3),transparent 70%);filter:blur(40px);animation:aurora 16s ease-in-out infinite alternate}
+@keyframes aurora{to{transform:translate3d(5%,-4%,0) rotate(10deg) scale(1.1)}}
+:root[data-fx="light"] body::before{animation:none}
+:root[data-fx="off"] body::before{animation:none;filter:none}
+@media (prefers-reduced-motion:reduce){body::before{animation:none}}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:16px max(12px,env(safe-area-inset-left)) 80px;display:flex;flex-direction:column;gap:40px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;padding:10px 14px;border-radius:18px;border:1px solid var(--glass-line);background:linear-gradient(160deg,var(--glass-2),var(--glass));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.brand{font:600 24px/1 var(--display);letter-spacing:-.02em}
+.brand em{color:var(--teal);font-style:italic}
+.ctl{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line-strong);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:none;border-radius:999px;padding:6px 11px;font:500 12px/1.2 var(--mono);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--teal);color:var(--teal-ink)}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+h1{font:560 clamp(30px,5vw,54px)/1.05 var(--display);margin:0;letter-spacing:-.02em}
+h2.sec{font:560 clamp(22px,3vw,30px)/1.1 var(--display);margin:0 0 14px}
+.sec-note{margin:-8px 0 14px;color:var(--muted);font-size:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:14px;align-items:start}
+.log{font:500 12px/1.4 var(--mono);color:var(--muted);min-height:1.4em}
+</style>
+<link rel="stylesheet" href="css/rewards.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <span class="brand">type<em>craft</em></span>
+    <div id="rankbar"></div>
+    <div class="ctl">
+      <div class="seg" role="group" aria-label="Theme">
+        <button type="button" data-set-bg="letters" aria-pressed="true">Letters</button>
+        <button type="button" data-set-bg="aurora" aria-pressed="false">Aurora</button>
+        <button type="button" data-set-bg="neon" aria-pressed="false">Neon</button>
+        <button type="button" data-set-bg="paper" aria-pressed="false">Paper</button>
+      </div>
+      <div class="seg" role="group" aria-label="Effects">
+        <button type="button" data-set-fx="full" aria-pressed="true">Full</button>
+        <button type="button" data-set-fx="light" aria-pressed="false">Light</button>
+        <button type="button" data-set-fx="off" aria-pressed="false">Off</button>
+      </div>
+    </div>
+  </header>
+
+  <div>
+    <h1>Rewards and Progress components</h1>
+    <p class="sec-note" style="margin-top:8px">Sample data only. Every block below is one call to <code>TC_REWARDS_UI</code>.</p>
+  </div>
+
+  <section>
+    <h2 class="sec">Results: resultsCard()</h2>
+    <p class="sec-note">With rank-up, crown and two new badges. <button type="button" class="rw-btn ghost small" id="replay">Replay animations</button> <span class="log" id="log" aria-live="polite"></span></p>
+    <div id="results"></div>
+  </section>
+
+  <section>
+    <h2 class="sec">Results without stars: resultsCard()</h2>
+    <div id="results2"></div>
+  </section>
+
+  <section class="grid2">
+    <div><h2 class="sec">rankUpCelebration()</h2><div id="rankup"></div></div>
+    <div><h2 class="sec">questsPanel() + dailyGoalRing()</h2><div id="quests"></div></div>
+  </section>
+
+  <section class="grid2">
+    <div><h2 class="sec">certificate()</h2><div id="cert"></div><p style="margin-top:12px"><button type="button" class="rw-btn" id="print">Print this certificate</button></p></div>
+    <div><h2 class="sec">medal() states</h2><div class="rw-medals" id="medals"></div></div>
+  </section>
+
+  <section>
+    <h2 class="sec">Progress screen: progressScreen()</h2>
+    <div id="progress"></div>
+  </section>
+</div>
+
+<script src="shared/course-meta.js"></script>
+<script src="js/rewards-ui.js"></script>
+<script>
+(function(){
+  var UI = window.TC_REWARDS_UI, html = document.documentElement;
+  var $ = function(s){ return document.querySelector(s); };
+
+  /* ---------- sample data ---------- */
+  var seed = 11;
+  function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var today = new Date(); today.setHours(0,0,0,0);
+  function iso(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function daysAgo(n){ var d = new Date(today); d.setDate(d.getDate() - n); return d; }
+
+  var history = [];
+  for (var i = 83; i >= 0; i--) {
+    var r = rnd(), streakRun = i < 12;
+    if (i === 20) { history.push({ date: iso(daysAgo(i)), minutes: 0, runs: 0, freeze: true }); continue; }
+    if (!streakRun && r < 0.32) continue;
+    var minutes = streakRun ? 6 + Math.round(rnd() * 16) : Math.round(2 + rnd() * 20);
+    var progress = (83 - i) / 83;
+    history.push({ date: iso(daysAgo(i)), minutes: minutes, runs: 1 + Math.round(minutes / 4),
+      bestWpm: Math.round(18 + progress * 22 + rnd() * 5), avgAccuracy: Math.round(89 + progress * 6 + rnd() * 3), xp: minutes * 8, quests: Math.floor(rnd() * 4) });
+  }
+
+  var keyStats = {};
+  'abcdefghijklmnopqrstuvwxyz1234567890;,./'.split('').forEach(function(ch){
+    var attempts = /[0-9]/.test(ch) ? Math.round(20 + rnd() * 60) : Math.round(120 + rnd() * 900);
+    var rate = 0.01 + rnd() * 0.03;
+    if ('qzpb'.indexOf(ch) >= 0) rate = 0.11 + rnd() * 0.06;
+    if ('yx6;'.indexOf(ch) >= 0) rate = 0.06 + rnd() * 0.02;
+    if (ch === '/') attempts = 2;
+    keyStats[ch] = { attempts: attempts, errors: Math.round(attempts * rate) };
+  });
+  var bigramLatency = { 'b>e':{count:41,totalMs:14350}, 'm>y':{count:22,totalMs:7260}, 'c>e':{count:38,totalMs:11020}, 'p>o':{count:19,totalMs:5320},
+    'o>u':{count:64,totalMs:15360}, 't>h':{count:210,totalMs:33600}, 'e>r':{count:180,totalMs:30600}, 'z>a':{count:2,totalMs:1400}, 'x>p':{count:9,totalMs:3510}, ' >q':{count:6,totalMs:2040} };
+  var errorClasses = { adjacent: 142, transposition: 38, omission: 61, other: 24 };
+
+  var state = {
+    lessons: {}, position: { lessonId: 'l9', step: 'word', at: new Date().toISOString() },
+    totals: { lessonsDone: 23, stars: 54, crowns: 6, bestWpm: 44, avgAccuracy: 95, minutes: 912 },
+    xp: 1240, rank: { name: 'Clerk', min: 900, next: ['Stenographer', 2000] },
+    streak: { count: 12, lastDate: iso(today), freezesUsedThisWeek: 0 },
+    quests: { date: iso(today), items: [
+      { id: 'two_lessons', title: 'Finish two lessons', progress: 1, goal: 2, done: false },
+      { id: 'acc95', title: 'One run at 95% or better', progress: 1, goal: 1, done: true },
+      { id: 'game', title: 'Play any game', progress: 0, goal: 1, done: false } ] },
+    badges: [ {id:'first_20',at:iso(daysAgo(70))}, {id:'thirty_club',at:iso(daysAgo(41))}, {id:'forty_flat',at:iso(daysAgo(6))},
+      {id:'clean_sheet',at:iso(daysAgo(66))}, {id:'no_slip',at:iso(daysAgo(30))}, {id:'three_days',at:iso(daysAgo(60))}, {id:'seven_days',at:iso(daysAgo(5))},
+      {id:'home_row_hero',at:iso(daysAgo(50))}, {id:'top_row_climber',at:iso(daysAgo(19))}, {id:'boss_down',at:iso(daysAgo(49))}, {id:'storm_1000',at:iso(daysAgo(12))},
+      {id:'night_owl',at:iso(daysAgo(33))} ],
+    certificates: [ {wpm:20,accuracy:96,seconds:60,at:iso(daysAgo(64))}, {wpm:30,accuracy:97,seconds:120,at:iso(daysAgo(38))}, {wpm:40,accuracy:96,seconds:300,at:iso(daysAgo(4))} ],
+    unlocks: [], settings: { bg: 'letters', effects: 'full', dailyGoal: 10 }, games: {}, placement: null,
+    stats: { keyStats: keyStats, bigramLatency: bigramLatency, errorClasses: errorClasses }
+  };
+  var samples = [];
+  [0,14,22,27,31,30,34,36,33,38,41,39,42].forEach(function(w, i){ samples.push({ t: i * 5, wpm: w }); });
+
+  /* ---------- render ---------- */
+  function renderResults(){
+    $('#results').innerHTML = UI.resultsCard({ title: 'Reaching for W & O', stars: 3, crown: true, xpBefore: 860, xpGained: 120,
+      wpm: 41, accuracy: 98.6, errors: 3, seconds: 62, samples: samples, newBadges: ['forty_flat', 'storm_1000'], nextLabel: 'Next: Reaching for U & P' });
+    $('#results2').innerHTML = UI.resultsCard({ stars: 0, crown: false, xpBefore: 1240, xpGained: 10, wpm: 17, accuracy: 76, errors: 14, seconds: 48,
+      samples: [{t:0,wpm:0},{t:5,wpm:12}], newBadges: [] });
+    UI.enhance($('#results')); UI.enhance($('#results2'));
+  }
+  $('#rankbar').innerHTML = UI.rankBar(state);
+  renderResults();
+  $('#rankup').innerHTML = UI.rankUpCelebration('Clerk');
+  $('#quests').innerHTML = UI.questsPanel(state.quests, { goal: 10, minutes: 7 });
+  var cert = { name: 'Asha Verma', wpm: 40, accuracy: 96, seconds: 300, date: iso(daysAgo(4)) };
+  $('#cert').innerHTML = UI.certificate(cert);
+  var defs = UI.FALLBACK_BADGES;
+  $('#medals').innerHTML = UI.medal(defs[2], true, iso(daysAgo(6))) + UI.medal(defs[16], true) + UI.medal(defs[27], false) + UI.medal(defs[35], false, null, { isNew: false });
+  UI.enhance($('#medals'));
+  $('#progress').innerHTML = UI.progressScreen(state, history, { name: 'Asha Verma' });
+  UI.enhance($('#progress'));
+
+  /* the app wires the result buttons; here they only log */
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-action]');
+    if (b && b.getAttribute('data-action') !== 'print-certificate') $('#log').textContent = 'data-action="' + b.getAttribute('data-action') + '"';
+  });
+  $('#replay').addEventListener('click', renderResults);
+  $('#print').addEventListener('click', function(){ UI.printCertificate(cert); });
+
+  /* theme and effects switches */
+  function press(sel, attr, v){ document.querySelectorAll(sel).forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute(attr) === v)); }); }
+  document.querySelectorAll('[data-set-bg]').forEach(function(b){ b.addEventListener('click', function(){ var v = b.getAttribute('data-set-bg'); html.setAttribute('data-bg', v); press('[data-set-bg]', 'data-set-bg', v); }); });
+  document.querySelectorAll('[data-set-fx]').forEach(function(b){ b.addEventListener('click', function(){ var v = b.getAttribute('data-set-fx'); html.setAttribute('data-fx', v); press('[data-set-fx]', 'data-set-fx', v); renderResults(); }); });
+  var q = new URLSearchParams(location.search);
+  if (q.get('bg')) document.querySelector('[data-set-bg="' + q.get('bg') + '"]').click();
+  if (q.get('fx')) document.querySelector('[data-set-fx="' + q.get('fx') + '"]').click();
+})();
+</script>
+</body>
+</html>
