@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/next.css">
 <link rel="stylesheet" href="css/games.css">
 <link rel="stylesheet" href="css/rewards.css">
+<link rel="stylesheet" href="css/typewriter.css">
 </head>
 <body>
 <canvas id="bgfx" hidden aria-hidden="true"></canvas>
@@ -59,6 +60,7 @@
         <p class="eyebrow">Typing tutor and arcade</p>
         <h1 class="headline">Learn to touch type, one key at a time.</h1>
         <p class="lede">Lessons from the home row to full speed, a coach that finds your weak keys, and an arcade for when you've earned a break. Free, no ads.</p>
+        <div class="home-machine" id="homeMachineSlot"></div>
       </section>
       <div class="home-stats" id="homeStats"></div>
       <div id="placementOffer" class="coach-panel continue-panel" hidden></div>
@@ -101,6 +103,7 @@
         </div>
         <div class="boss-mount" id="bossMount" hidden></div>
         <div class="step-note" id="stepNote" hidden></div>
+        <div class="lesson-machine" id="lessonMachine"></div>
         <div class="paper-wrap">
           <div class="paper" id="paper">
             <div class="text-display" id="textDisplay"></div>
@@ -371,6 +374,7 @@
 <script src="js/games/boss.js"></script>
 <script src="js/games/daily.js"></script>
 <script src="js/rewards-ui.js"></script>
+<script src="js/typewriter.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

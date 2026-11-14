@@ -129,7 +129,7 @@ function showStepNote(text){ const n=document.getElementById('stepNote'); n.text
 
 function currentWpm(){ if(!startTime) return 0; const m=(Date.now()-startTime)/60000; return m<=0?0:Math.round((correctKeystrokes/5)/m); }
 function currentAccuracy(){ if(totalKeystrokes===0) return 100; return Math.max(0, Math.round(((totalKeystrokes-errorCount)/totalKeystrokes)*100)); }
-function updateStatsDisplay(){ wpmValueEl.textContent=currentWpm(); accValueEl.textContent=currentAccuracy()+'%'; errValueEl.textContent=errorCount; }
+function updateStatsDisplay(){ wpmValueEl.textContent=currentWpm(); accValueEl.textContent=currentAccuracy()+'%'; errValueEl.textContent=errorCount; machineReadings(); }
 function updateCaretPosition(){ letters.forEach(l=>l.classList.remove('current')); if(currentIndex<letters.length) letters[currentIndex].classList.add('current'); }
 function startTimerIfNeeded(){
   if(startTime) return;
@@ -214,6 +214,7 @@ function loadStage(){
   renderText(exerciseText);
   currentIndex = 0;
   markStepStart();
+  if(lessonMachine){ lessonMachine.setText(exerciseText); lessonMachine.setPosition(0); machineMeta(); machineReadings(); }
   updateCaretPosition(); updateCarriage(); updateFingerGuide(); renderStageRow();
   if(!lesson.isReview && !lesson.isPlacement) notePosition(currentLessonId, currentStage);
 }
@@ -353,6 +354,7 @@ function handleKeydown(e){
       letters[currentIndex].className='letter default';
       lastKeystrokeWasCorrect = false; // the next interval includes a correction, so it isn't rhythm data
       updateCaretPosition(); updateCarriage(); updateFingerGuide(); updateStatsDisplay();
+      if(lessonMachine) lessonMachine.setPosition(currentIndex);
     }
     return;
   }
@@ -378,11 +380,16 @@ function handleKeydown(e){
 
   if(isCorrect){ letters[currentIndex].className='letter correct'; correctKeystrokes++; playSound('correct'); }
   else{
-    letters[currentIndex].className='letter incorrect'; errorCount++; playSound('incorrect');
-    if(stages[currentStage] === 'lock'){ lockBack(); return; }
+    errorCount++; playSound('incorrect');
+    if(stages[currentStage] === 'lock'){ lockBack(); if(lessonMachine){ lessonMachine.pressKey(inputChar, false); lessonMachine.setPosition(currentIndex, { wrong:true }); } return; }
+    // a slip turns the key and the letter red; the caret waits for the right key
+    if(lessonMachine){ lessonMachine.pressKey(inputChar, false); lessonMachine.setPosition(currentIndex, { wrong:true }); updateStatsDisplay(); return; }
+    letters[currentIndex].className='letter incorrect';
   }
+  if(isCorrect && lessonMachine) lessonMachine.pressKey(inputChar, true);
 
   currentIndex++; updateCaretPosition(); updateStatsDisplay(); updateCarriage(); updateFingerGuide();
+  if(lessonMachine) lessonMachine.setPosition(currentIndex);
 
   if(currentIndex === letters.length){
     if(timedLimit()){ countUncorrected(); const keep = stepStart; loadStage(); stepStart = keep; }   // timed: the clock ends it, so finishing the text brings more
@@ -728,6 +735,7 @@ function renderPlacementOffer(){
 function renderHome(){ renderTierFilter(); renderHomeStats(); renderPlacementOffer(); renderContinuePanel(); renderRewardBits(); renderCourseMap(); renderDashboard(); renderReviewPanel(); renderCoachPanel(); }
 
 function openLesson(lessonId, startStage){
+  document.documentElement.classList.add('in-lesson');
   hideExtraViews(); setNavCurrent('homeView'); closeThemeMenu();
   currentLessonId = lessonId;
   document.getElementById('accountView').style.display='none';
@@ -743,6 +751,7 @@ function openLesson(lessonId, startStage){
   loadStage();
 }
 function backToDashboard(){
+  document.documentElement.classList.remove('in-lesson');
   hideExtraViews(); setNavCurrent('homeView'); closeThemeMenu();
   lessonView.style.display='none'; resultsView.classList.add('hidden');
   document.getElementById('accountView').style.display='none';
@@ -755,6 +764,7 @@ function backToDashboard(){
   renderHome();
 }
 function openFunMode(){
+  document.documentElement.classList.remove('in-lesson');
   hideExtraViews(); setNavCurrent('funSelectView'); closeThemeMenu();
   homeView.style.display='none';
   document.getElementById('accountView').style.display='none';
@@ -769,6 +779,7 @@ function lockBack(){
   while(start > 0 && letters[start-1].offsetTop === top) start--;
   for(let i = start; i <= currentIndex && i < letters.length; i++){ if(letters[i].classList.contains('correct')) correctKeystrokes--; letters[i].className = 'letter default'; }
   currentIndex = start; updateCaretPosition(); updateStatsDisplay(); updateFingerGuide();
+  if(lessonMachine) lessonMachine.setPosition(currentIndex);
   showStepNote('Accuracy lock: a mistake sends you back to the start of the line.');
 }
 function countUncorrected(){ uncorrectedTotal += letters.filter(l => l.classList.contains('incorrect')).length; }
@@ -1872,6 +1883,7 @@ function applyEffects(level){
 function applyFingerGuide(on){
   Settings.fingerGuide=!!on; saveSettings();
   const hc=document.querySelector('.hands-card'); if(hc) hc.style.display = on ? '' : 'none';
+  if(lessonMachine) lessonMachine.setGuide(!!on);
   paintThemeControls();
 }
 
@@ -1933,6 +1945,7 @@ function setNavCurrent(id){
 }
 function hideExtraViews(){ ['settingsView','progressView','workshopView'].forEach(id=>{ document.getElementById(id).style.display='none'; }); }
 function openPage(id){
+  document.documentElement.classList.toggle('in-lesson', id === 'lessonView');
   stopArcade(); stopTimers(); resultsView.classList.add('hidden'); closeAccountMenu(); closeThemeMenu();
   VIEW_IDS.forEach(v=>{ document.getElementById(v).style.display = v===id ? 'flex' : 'none'; });
   setNavCurrent(id); window.scrollTo(0,0);
@@ -2000,7 +2013,8 @@ function applyWorkshopLook(){
   if(k){ r.setProperty('--kt', k.kt); r.setProperty('--kt-hi', k.hi); r.setProperty('--ks', k.ks); r.setProperty('--kl', k.kl); }
   r.setProperty('--sheet-ink', WS_LOOK['ink:' + (Settings.ink || 'black')] || '#26221b');
   r.setProperty('--sheet', WS_LOOK['paper:' + (Settings.paper || 'cream')] || '#f6f0e1');
-  if(window.TC_TYPEWRITER && homeMachine && homeMachine.setSkin) homeMachine.setSkin(Settings.keycaps || 'standard');
+  [homeMachine, lessonMachine].forEach(m => { if(m){ m.setSkin(Settings.keycaps || 'standard');
+    m.el.style.setProperty('--sheet', WS_LOOK['paper:' + (Settings.paper || 'cream')] || '#f6f0e1'); m.el.style.setProperty('--sheet-ink', WS_LOOK['ink:' + (Settings.ink || 'black')] || '#26221b'); } });
 }
 function renderWorkshop(){
   const xp = (Progress.view && Progress.view.xp) || 0, open = new Set(TC_RULES.unlocksFor(xp));
@@ -2021,7 +2035,22 @@ document.getElementById('workshopView').addEventListener('click', (e) => {
   if(Account.user) api('PUT', '/api/user/settings', { settings: { keycaps:Settings.keycaps, ink:Settings.ink, paper:Settings.paper, keySound:Settings.keySound, bg:Settings.bg, effects:Settings.effects, dailyGoal:Settings.dailyGoal, fingerGuide:Settings.fingerGuide } });
   renderWorkshop();
 });
-let homeMachine = null;
+let homeMachine = null, lessonMachine = null;
+/* the 3D typewriter (js/typewriter.js): a demo on the home screen, the real thing in every lesson */
+function setupMachines(){
+  if(!window.TC_TYPEWRITER) return;
+  homeMachine = TC_TYPEWRITER.create(document.getElementById('homeMachineSlot'), { demo:true, skin:Settings.keycaps || 'standard', showGuide:true,
+    meta:{ left:'Level 3 · All 26 letters', right:'Demo' } });
+  lessonMachine = TC_TYPEWRITER.create(document.getElementById('lessonMachine'), { demo:false, skin:Settings.keycaps || 'standard', showGuide:Settings.fingerGuide, autoNext:true });
+  document.documentElement.classList.add('has-machine');
+}
+function machineMeta(){
+  if(!lessonMachine) return;
+  const l = getLessonById(currentLessonId); if(!l) return;
+  const left = l.isPlacement ? 'Placement test' : l.isReview ? 'Problem keys drill' : `Level ${l.level} · ${l.title}`;
+  lessonMachine.setMeta(left, `Step ${currentStage+1} of ${stages.length} · ${STEP_LABEL[stages[currentStage]] || ''}`);
+}
+function machineReadings(){ if(lessonMachine) lessonMachine.readings({ wpm:currentWpm(), accuracy:currentAccuracy(), seconds:parseFloat(timeValueEl.textContent)||0, errors:errorCount }); }
 
 /* ---- works offline: a service worker caches the app's own files (never /api) ---- */
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
@@ -2048,6 +2077,7 @@ window.addEventListener('beforeunload', saveKeyStats);
   applyTheme(Settings.bg);
   let savedSound = 0; try{ savedSound = parseInt(localStorage.getItem(SOUND_KEY)||'0', 10) || 0; }catch(e){}
   applySoundLevel(savedSound);
+  setupMachines();
   applyFingerGuide(Settings.fingerGuide);
   applyWorkshopLook();
   loadProgress(); loadStreak(); loadKeyStats(); loadAnalytics();

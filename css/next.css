@@ -277,3 +277,13 @@ html,body{overflow-x:hidden}
 .ws-item small{font:500 11px/1.2 var(--mono);color:var(--muted)}
 .ws-item.in-use{border-color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal)}
 .ws-item[disabled]{opacity:.5;cursor:not-allowed}
+
+/* ---------- the 3D typewriter in lessons and on the home screen ---------- */
+.has-machine #lessonView .paper-wrap{position:absolute;left:-10000px;top:0;width:900px;opacity:0;pointer-events:none}
+.has-machine #lessonView .rail-wrap,.has-machine #lessonView .stats-row,.has-machine #lessonView .hands-card,.has-machine #lessonView .key-chips{display:none}
+.has-machine #lessonView .paper-wrap #typer{pointer-events:auto}
+#lessonView.mode-watch .lesson-machine,#lessonView.mode-boss .lesson-machine{display:none}
+.home-machine{margin-top:18px}
+/* while a lesson is open the ambient glow holds still, so every keystroke shows in the next frame */
+:root.in-lesson body::before,:root.in-lesson body::after{animation:none}
+:root.in-lesson #bgfx{display:none}
