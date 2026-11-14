@@ -3,7 +3,7 @@
 // static asset; only /api/* runs the Worker code in src/.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "typecraft01",
+  "name": "typecraft",
   "main": "src/index.js",
   "compatibility_date": "2026-11-01",
   "assets": {
