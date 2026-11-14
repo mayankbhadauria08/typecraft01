@@ -21,11 +21,11 @@ Either send the Database ID to Claude, or edit it yourself:
 2. In the 8 lines under `ACCOUNTS DATABASE`, delete the `// ` at the start of each line.
 3. Replace `PASTE_YOUR_D1_DATABASE_ID_HERE` with your Database ID, then commit.
 
-Once that change is on `main`, Cloudflare's Workers Builds redeploys the site automatically within a minute or two. You can watch it in the dashboard under **Workers & Pages → typecraft01 → Deployments**.
+Once that change is on `main`, Cloudflare's Workers Builds redeploys the site automatically within a minute or two. You can watch it in the dashboard under **Workers & Pages → typecraft → Deployments**.
 
 ## 3. Check it
 
-Open https://typecraft01.mayankbhadauria08.workers.dev. A **sign in** button now appears at the right of the header.
+Open https://typecraft.mayankbhadauria08.workers.dev. A **sign in** button now appears at the right of the header.
 
 1. Create your account. If this browser has guest progress, TypeCraft offers to add it to your account. Nothing in this browser is deleted.
 2. Finish a lesson, then open the site in a different browser (or a private window) and sign in. The lesson shows as completed, and **Continue** takes you to the next one.
@@ -37,13 +37,13 @@ Without email, sign-up, sign-in, profile, change password and progress all work.
 TypeCraft sends email through [Resend](https://resend.com):
 
 1. Sign up at resend.com **with the email address you use for TypeCraft**, then create an **API key** (permission: *Sending access*).
-2. In Cloudflare: **Workers & Pages → typecraft01 → Settings → Variables and Secrets → Add**, and add these as type **Secret**:
+2. In Cloudflare: **Workers & Pages → typecraft → Settings → Variables and Secrets → Add**, and add these as type **Secret**:
 
 | Name | Value |
 |---|---|
 | `RESEND_API_KEY` | the API key from Resend (starts with `re_`) |
 | `EMAIL_FROM` | `TypeCraft <onboarding@resend.dev>` |
-| `APP_URL` *(optional)* | `https://typecraft01.mayankbhadauria08.workers.dev` (the address used in email links; if not set, the site's own address is used) |
+| `APP_URL` *(optional)* | `https://typecraft.mayankbhadauria08.workers.dev` (the address used in email links; if not set, the site's own address is used) |
 
 Saving a secret applies it right away. Secrets are kept across deploys and never appear in the code.
 
@@ -75,7 +75,7 @@ Existing accounts need nothing else: the first time a learner is seen after the 
 
 `/admin` shows learners, active learners and runs today, refused or failed events, and the differences found by the nightly check (that number should be zero). Only the emails in the `OWNER_EMAILS` secret can open it; everyone else gets "Not found".
 
-In Cloudflare: **Workers & Pages → typecraft01 → Settings → Variables and Secrets → Add**, type **Secret**, name `OWNER_EMAILS`, value your TypeCraft sign-in email (several are separated by commas). Or: `npx wrangler secret put OWNER_EMAILS`.
+In Cloudflare: **Workers & Pages → typecraft → Settings → Variables and Secrets → Add**, type **Secret**, name `OWNER_EMAILS`, value your TypeCraft sign-in email (several are separated by commas). Or: `npx wrangler secret put OWNER_EMAILS`.
 
 ### The nightly check
 
